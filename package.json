@@ -1,0 +1,54 @@
+{
+  "name": "web-warriors",
+  "version": "1.0.0",
+  "description": "3D multiplayer spider game with third-person perspective",
+  "main": "src/server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run client:dev\" \"npm run server:dev\"",
+    "client:dev": "vite",
+    "server:dev": "nodemon src/server/index.js",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src --ext .js,.ts",
+    "lint:fix": "eslint src --ext .js,.ts --fix",
+    "format": "prettier --write \"src/**/*.{js,ts,json}\"",
+    "start": "node src/server/index.js"
+  },
+  "keywords": [
+    "game",
+    "3d",
+    "multiplayer",
+    "spider",
+    "web",
+    "physics"
+  ],
+  "author": "Web Warriors Team",
+  "license": "MIT",
+  "dependencies": {
+    "cannon-es": "^0.20.0",
+    "dat.gui": "^0.7.9",
+    "express": "^4.18.2",
+    "gsap": "^3.12.2",
+    "howler": "^2.2.3",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.8.1",
+    "stats.js": "^0.17.0",
+    "three": "^0.155.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.155.0",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@typescript-eslint/parser": "^6.4.0",
+    "concurrently": "^8.2.0",
+    "eslint": "^8.47.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "jest": "^29.6.2",
+    "nodemon": "^3.0.1",
+    "prettier": "^3.0.2",
+    "typescript": "^5.1.6",
+    "vite": "^4.4.9"
+  }
+}
