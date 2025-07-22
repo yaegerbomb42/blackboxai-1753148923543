@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Warriors - 3D Spider Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            overflow: hidden;
+            color: white;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #loadingScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        #loadingText {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        #loadingBar {
+            width: 300px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        #loadingProgress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            transition: width 0.3s ease;
+        }
+        
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        #minimap {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #fff;
+            border-radius: 10px;
+            z-index: 100;
+        }
+        
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            z-index: 50;
+            pointer-events: none;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- Loading Screen -->
+        <div id="loadingScreen">
+            <h1>Web Warriors</h1>
+            <div id="loadingText">Loading...</div>
+            <div id="loadingBar">
+                <div id="loadingProgress"></div>
+            </div>
+        </div>
+        
+        <!-- Game HUD -->
+        <div id="hud" class="hidden">
+            <div id="healthBar" style="margin-bottom: 10px;">
+                <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+                    Health: <span id="healthValue">100</span>/100
+                </div>
+            </div>
+            <div id="staminaBar" style="margin-bottom: 10px;">
+                <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+                    Stamina: <span id="staminaValue">100</span>/100
+                </div>
+            </div>
+            <div id="scoreDisplay">
+                <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+                    Flies Caught: <span id="scoreValue">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Minimap -->
+        <div id="minimap" class="hidden">
+            <canvas id="minimapCanvas" width="196" height="196"></canvas>
+        </div>
+        
+        <!-- Crosshair -->
+        <div id="crosshair" class="hidden"></div>
+    </div>
+    
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
