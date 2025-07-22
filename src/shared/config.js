@@ -2,6 +2,7 @@ export const GAME_CONFIG = {
   physics: {
     gravity: -9.81,
     webStrength: 50,
+    webStiffness: 0.8,
     climbSpeed: 2,
     jumpForce: 8,
     airResistance: 0.98,
@@ -11,6 +12,7 @@ export const GAME_CONFIG = {
     maxHealth: 100,
     maxStamina: 100,
     webCooldown: 1000, // ms
+    webRange: 15, // maximum web shooting distance
     flyRespawnTime: 5000, // ms
     flyCount: 10,
     staminaRegenRate: 20, // per second

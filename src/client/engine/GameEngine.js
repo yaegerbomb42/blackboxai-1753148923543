@@ -38,33 +38,44 @@ export class GameEngine {
   async init() {
     console.log('Initializing game engine...');
     
-    // Initialize renderer
-    this.initRenderer();
-    
-    // Initialize managers
-    await this.sceneManager.init();
-    this.physicsManager.init();
-    this.inputManager.init();
-    this.cameraManager.init(this.renderer);
-    
-    // Create spider player
-    this.spider = new SpiderController();
-    await this.spider.init();
-    this.sceneManager.add(this.spider.mesh);
-    this.physicsManager.addBody(this.spider.body);
-    
-    // Initialize other managers
-    this.flyManager.init(this.sceneManager, this.physicsManager);
-    this.webManager.init(this.sceneManager, this.physicsManager);
-    this.uiManager.init();
-    
-    // Setup camera to follow spider
-    this.cameraManager.setTarget(this.spider.mesh);
-    
-    // Spawn initial flies
-    this.flyManager.spawnFlies(GAME_CONFIG.gameplay.flyCount);
-    
-    console.log('Game engine initialized');
+    try {
+      // Initialize renderer
+      this.initRenderer();
+      
+      // Initialize managers
+      await this.sceneManager.init();
+      this.physicsManager.init();
+      this.inputManager.init();
+      this.cameraManager.init(this.renderer);
+      
+      // Create spider player
+      this.spider = new SpiderController();
+      await this.spider.init(this.sceneManager.scene, this.cameraManager.camera);
+      this.sceneManager.add(this.spider.mesh);
+      this.physicsManager.addBody(this.spider.body);
+      
+      // Set up spider death callback
+      this.spider.onDeath = () => {
+        this.handlePlayerDeath();
+      };
+      
+      // Initialize other managers
+      this.flyManager.init(this.sceneManager, this.physicsManager);
+      this.webManager.init(this.sceneManager, this.physicsManager);
+      this.uiManager.init();
+      
+      // Setup camera to follow spider
+      this.cameraManager.setTarget(this.spider.mesh);
+      
+      // Spawn initial flies
+      this.flyManager.spawnFlies(GAME_CONFIG.gameplay.flyCount);
+      
+      console.log('Game engine initialized');
+    } catch (error) {
+      console.error('Failed to initialize game engine:', error);
+      this.uiManager.displayError('Failed to initialize game. Please refresh the page.');
+      throw error;
+    }
   }
 
   initRenderer() {
@@ -85,42 +96,56 @@ export class GameEngine {
   }
 
   update() {
-    const deltaTime = this.clock.getDelta();
-    
-    // Update physics
-    this.physicsManager.update(deltaTime);
-    
-    // Update input
-    this.inputManager.update();
-    
-    // Update spider
-    if (this.spider) {
-      this.spider.update(deltaTime, this.inputManager.getInputState());
-    }
-    
-    // Update camera
-    this.cameraManager.update(deltaTime, this.inputManager.getInputState());
-    
-    // Update flies
-    this.flyManager.update(deltaTime);
-    
-    // Update web system
-    this.webManager.update(deltaTime);
-    
-    // Check for collisions
-    this.checkCollisions();
-    
-    // Update UI
-    this.updateUI();
-    
-    // Update minimap
-    if (this.spider) {
-      this.uiManager.updateMinimap(this.spider.getPosition(), this.flyManager.getFlies());
+    try {
+      const deltaTime = this.clock.getDelta();
+      
+      // Skip update if game is paused
+      if (this.uiManager.isPaused) {
+        return;
+      }
+      
+      // Update physics
+      this.physicsManager.update(deltaTime);
+      
+      // Update input
+      this.inputManager.update();
+      
+      // Update spider
+      if (this.spider && !this.spider.isDead) {
+        this.spider.update(deltaTime, this.inputManager.getInputState());
+      }
+      
+      // Update camera
+      this.cameraManager.update(deltaTime, this.inputManager.getInputState());
+      
+      // Update flies
+      this.flyManager.update(deltaTime);
+      
+      // Update web system
+      this.webManager.update(deltaTime);
+      
+      // Check for collisions
+      this.checkCollisions();
+      
+      // Update UI
+      this.updateUI();
+      
+      // Update minimap
+      if (this.spider) {
+        this.uiManager.updateMinimap(this.spider.getPosition(), this.flyManager.getFlies());
+      }
+    } catch (error) {
+      console.error('Game loop error:', error);
+      this.uiManager.displayError('An error occurred during game update.');
     }
   }
 
   render() {
-    this.renderer.render(this.sceneManager.scene, this.cameraManager.camera);
+    try {
+      this.renderer.render(this.sceneManager.scene, this.cameraManager.camera);
+    } catch (error) {
+      console.error('Render error:', error);
+    }
   }
 
   checkCollisions() {
@@ -157,11 +182,33 @@ export class GameEngine {
     this.uiManager.updateScore(this.gameState.score);
   }
 
+  handlePlayerDeath() {
+    console.log('Player died - showing game over screen');
+    this.uiManager.showGameOver(this.gameState.score);
+    
+    // Respawn after delay
+    setTimeout(() => {
+      if (this.spider) {
+        this.spider.respawn();
+        this.gameState.score = Math.max(0, this.gameState.score - 50); // Penalty for dying
+        this.uiManager.hideGameOver();
+      }
+    }, 3000);
+  }
+
   updatePlayer(data) {
     // Handle multiplayer player updates
     if (data.id !== this.spider?.id) {
       // Update other players
       // TODO: Implement multiplayer player rendering
+      if (this.gameState.players.has(data.id)) {
+        const player = this.gameState.players.get(data.id);
+        // Update player position, health, etc.
+        if (player.mesh) {
+          player.mesh.position.copy(data.position);
+          player.mesh.quaternion.copy(data.rotation);
+        }
+      }
     }
   }
 

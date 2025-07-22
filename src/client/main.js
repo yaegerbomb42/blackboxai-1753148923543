@@ -117,13 +117,65 @@ class Game {
 window.addEventListener('load', () => {
   const game = new Game();
   window.game = game;
-  game.init();
+  game.init().catch(error => {
+    console.error('Failed to start game:', error);
+    // Show error message to user
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 1000;
+      font-family: Arial, sans-serif;
+    `;
+    errorDiv.innerHTML = `
+      <h3>Failed to Start Game</h3>
+      <p>Please refresh the page and try again.</p>
+      <button onclick="location.reload()" style="
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+      ">Refresh Page</button>
+    `;
+    document.body.appendChild(errorDiv);
+  });
 });
 
 // Handle window resize
 window.addEventListener('resize', () => {
   if (window.game && window.game.engine) {
     window.game.engine.handleResize();
+  }
+});
+
+// Handle pause/resume with Escape key
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && window.game && window.game.engine && window.game.engine.uiManager) {
+    e.preventDefault();
+    if (window.game.engine.uiManager.isPaused) {
+      window.game.engine.uiManager.hidePauseMenu();
+    } else {
+      window.game.engine.uiManager.showPauseMenu();
+    }
+  }
+});
+
+// Handle visibility change (pause when tab is not active)
+document.addEventListener('visibilitychange', () => {
+  if (window.game && window.game.engine && window.game.engine.uiManager) {
+    if (document.hidden) {
+      window.game.engine.uiManager.showPauseMenu();
+    }
   }
 });
 

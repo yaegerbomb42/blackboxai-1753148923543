@@ -12,7 +12,9 @@ export class SpiderController {
     this.isSwinging = false;
     this.webTarget = null;
     this.webConstraint = null;
+    this.webLine = null;
     this.lastWebShot = 0;
+    this.isDead = false;
     
     // Movement state
     this.moveSpeed = 5;
@@ -20,10 +22,17 @@ export class SpiderController {
     this.isGrounded = false;
     this.canClimb = false;
     this.climbSurface = null;
+    
+    // References for raycasting
+    this.scene = null;
+    this.camera = null;
   }
 
-  async init() {
+  async init(scene, camera) {
     console.log('Initializing spider...');
+    
+    this.scene = scene;
+    this.camera = camera;
     
     this.createMesh();
     this.createPhysicsBody();
@@ -118,22 +127,38 @@ export class SpiderController {
   }
 
   update(deltaTime, inputState) {
-    // Reset movement flags
-    this.isGrounded = false;
-    this.canClimb = false;
+    if (this.isDead) return;
     
-    // Update movement
-    this.updateMovement(deltaTime, inputState);
-    
-    // Update web mechanics
-    this.updateWeb(deltaTime, inputState);
-    
-    // Update stamina
-    this.updateStamina(deltaTime);
-    
-    // Sync mesh with physics body
-    this.mesh.position.copy(this.body.position);
-    this.mesh.quaternion.copy(this.body.quaternion);
+    try {
+      // Reset movement flags
+      this.isGrounded = false;
+      this.canClimb = false;
+      
+      // Update movement
+      this.updateMovement(deltaTime, inputState);
+      
+      // Update web mechanics
+      this.updateWeb(deltaTime, inputState);
+      
+      // Update stamina
+      this.updateStamina(deltaTime);
+      
+      // Update web line visual
+      if (this.isSwinging) {
+        this.updateWebLine();
+      }
+      
+      // Sync mesh with physics body
+      this.mesh.position.copy(this.body.position);
+      this.mesh.quaternion.copy(this.body.quaternion);
+      
+      // Check for death conditions (fall out of world, etc.)
+      if (this.mesh.position.y < -50) {
+        this.die();
+      }
+    } catch (error) {
+      console.error('Error in spider update:', error);
+    }
   }
 
   updateMovement(deltaTime, inputState) {
@@ -204,47 +229,118 @@ export class SpiderController {
   }
 
   shootWeb() {
-    // TODO: Implement raycasting for web shooting
-    // For now, create a simple web attachment point
-    const webRange = 10;
-    const direction = new THREE.Vector3(0, 1, -1).normalize();
-    const targetPosition = this.mesh.position.clone().add(direction.multiplyScalar(webRange));
-    
-    // Check if target is valid (wall, ceiling, etc.)
-    this.createWebAttachment(targetPosition);
+    if (!this.scene || !this.camera) {
+      console.warn('Scene or camera not available for web shooting');
+      return;
+    }
+
+    try {
+      // Create raycaster from camera direction
+      const raycaster = new THREE.Raycaster();
+      const direction = new THREE.Vector3();
+      
+      // Get direction from camera
+      this.camera.getWorldDirection(direction);
+      raycaster.set(this.mesh.position, direction);
+      
+      // Find intersections with scene objects
+      const intersections = raycaster.intersectObjects(this.scene.children, true);
+      
+      // Filter out the spider itself and find valid attachment points
+      const validIntersections = intersections.filter(intersection => {
+        return intersection.object !== this.mesh && 
+               intersection.distance <= GAME_CONFIG.gameplay.webRange &&
+               intersection.object.userData.webAttachable !== false;
+      });
+      
+      if (validIntersections.length > 0) {
+        const target = validIntersections[0];
+        this.createWebAttachment(target.point);
+        console.log('Web attached to:', target.object.name || 'object', 'at distance:', target.distance.toFixed(2));
+      } else {
+        console.log('No valid web attachment point found within range');
+        // Could add a visual/audio feedback for failed web shot
+      }
+    } catch (error) {
+      console.error('Error during web shooting:', error);
+    }
   }
 
   createWebAttachment(targetPosition) {
-    // Create physics constraint for web
-    this.webTarget = targetPosition;
-    this.isSwinging = true;
-    
-    // TODO: Create visual web line
-    console.log('Web shot to:', targetPosition);
+    try {
+      // Break existing web first
+      if (this.isSwinging) {
+        this.breakWeb();
+      }
+      
+      // Create physics constraint for web
+      this.webTarget = targetPosition.clone();
+      this.isSwinging = true;
+      
+      // Create visual web line
+      this.createWebLine(targetPosition);
+      
+      // Create physics constraint (simplified spring constraint)
+      const distance = this.mesh.position.distanceTo(targetPosition);
+      this.webConstraint = {
+        target: targetPosition,
+        restLength: distance,
+        stiffness: GAME_CONFIG.physics.webStiffness || 0.8
+      };
+      
+      console.log('Web attached to:', targetPosition);
+    } catch (error) {
+      console.error('Error creating web attachment:', error);
+    }
   }
 
   breakWeb() {
-    if (this.webConstraint) {
-      // Remove physics constraint
-      this.webConstraint = null;
+    try {
+      if (this.webConstraint) {
+        // Remove physics constraint
+        this.webConstraint = null;
+      }
+      
+      // Remove visual web line
+      if (this.webLine && this.scene) {
+        this.scene.remove(this.webLine);
+        this.webLine = null;
+      }
+      
+      this.isSwinging = false;
+      this.webTarget = null;
+      
+      console.log('Web broken');
+    } catch (error) {
+      console.error('Error breaking web:', error);
     }
-    
-    this.isSwinging = false;
-    this.webTarget = null;
-    
-    // TODO: Remove visual web line
-    console.log('Web broken');
   }
 
   calculateSwingForce() {
-    if (!this.webTarget) return new CANNON.Vec3();
+    if (!this.webTarget || !this.webConstraint) return new CANNON.Vec3();
     
-    // Simple pendulum physics
-    const position = new CANNON.Vec3(this.body.position.x, this.body.position.y, this.body.position.z);
-    const target = new CANNON.Vec3(this.webTarget.x, this.webTarget.y, this.webTarget.z);
-    const direction = target.vsub(position).unit();
-    
-    return direction.scale(GAME_CONFIG.physics.webStrength);
+    try {
+      // Get current position and target
+      const position = new CANNON.Vec3(this.body.position.x, this.body.position.y, this.body.position.z);
+      const target = new CANNON.Vec3(this.webTarget.x, this.webTarget.y, this.webTarget.z);
+      
+      // Calculate spring force
+      const displacement = target.vsub(position);
+      const currentLength = displacement.length();
+      const restLength = this.webConstraint.restLength;
+      
+      // Spring force: F = -k * (current_length - rest_length) * direction
+      const springMagnitude = this.webConstraint.stiffness * (currentLength - restLength);
+      const springForce = displacement.unit().scale(springMagnitude);
+      
+      // Add some damping to prevent oscillation
+      const dampingForce = this.body.velocity.scale(-0.1);
+      
+      return springForce.vadd(dampingForce);
+    } catch (error) {
+      console.error('Error calculating swing force:', error);
+      return new CANNON.Vec3();
+    }
   }
 
   updateStamina(deltaTime) {
@@ -272,9 +368,87 @@ export class SpiderController {
     this.health = Math.min(this.health, GAME_CONFIG.gameplay.maxHealth);
   }
 
+  createWebLine(targetPosition) {
+    try {
+      // Remove existing web line
+      if (this.webLine && this.scene) {
+        this.scene.remove(this.webLine);
+      }
+      
+      // Create line geometry
+      const points = [
+        this.mesh.position.clone(),
+        targetPosition.clone()
+      ];
+      
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({ 
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.8,
+        linewidth: 2
+      });
+      
+      this.webLine = new THREE.Line(geometry, material);
+      this.scene.add(this.webLine);
+    } catch (error) {
+      console.error('Error creating web line:', error);
+    }
+  }
+
+  updateWebLine() {
+    if (this.webLine && this.webTarget) {
+      try {
+        const points = [
+          this.mesh.position.clone(),
+          this.webTarget.clone()
+        ];
+        
+        this.webLine.geometry.setFromPoints(points);
+        this.webLine.geometry.attributes.position.needsUpdate = true;
+      } catch (error) {
+        console.error('Error updating web line:', error);
+      }
+    }
+  }
+
   die() {
+    if (this.isDead) return;
+    
+    this.isDead = true;
+    this.health = 0;
+    
+    // Break any active web
+    this.breakWeb();
+    
+    // Stop movement
+    if (this.body) {
+      this.body.velocity.set(0, 0, 0);
+      this.body.angularVelocity.set(0, 0, 0);
+    }
+    
     console.log('Spider died!');
-    // TODO: Implement death logic
+    
+    // Trigger death event (can be caught by GameEngine)
+    if (this.onDeath) {
+      this.onDeath();
+    }
+  }
+
+  respawn(position = new THREE.Vector3(0, 2, 0)) {
+    this.isDead = false;
+    this.health = GAME_CONFIG.gameplay.maxHealth;
+    this.stamina = GAME_CONFIG.gameplay.maxStamina;
+    
+    // Reset position
+    this.mesh.position.copy(position);
+    if (this.body) {
+      this.body.position.set(position.x, position.y, position.z);
+      this.body.velocity.set(0, 0, 0);
+      this.body.angularVelocity.set(0, 0, 0);
+    }
+    
+    console.log('Spider respawned at:', position);
   }
 
   getPosition() {
