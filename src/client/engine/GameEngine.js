@@ -200,16 +200,40 @@ export class GameEngine {
     // Handle multiplayer player updates
     if (data.id !== this.spider?.id) {
       // Update other players
-      // TODO: Implement multiplayer player rendering
       if (this.gameState.players.has(data.id)) {
         const player = this.gameState.players.get(data.id);
-        // Update player position, health, etc.
+        // Update player position, rotation, health, stamina, etc.
         if (player.mesh) {
-          player.mesh.position.copy(data.position);
-          player.mesh.quaternion.copy(data.rotation);
+          player.mesh.position.set(data.position.x, data.position.y, data.position.z);
+          player.mesh.quaternion.set(data.rotation._x, data.rotation._y, data.rotation._z, data.rotation._w);
         }
+        player.health = data.health;
+        player.stamina = data.stamina;
+        player.score = data.score;
+      } else {
+        // Create new player entity
+        const newPlayer = this.createRemotePlayer(data);
+        this.gameState.players.set(data.id, newPlayer);
+        this.sceneManager.add(newPlayer.mesh);
       }
     }
+  }
+
+  createRemotePlayer(data) {
+    // Create a simple mesh to represent other players (e.g., a sphere)
+    const geometry = new THREE.SphereGeometry(0.3, 16, 12);
+    const material = new THREE.MeshLambertMaterial({ color: 0x888888 });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(data.position.x, data.position.y, data.position.z);
+    mesh.castShadow = true;
+
+    return {
+      id: data.id,
+      mesh: mesh,
+      health: data.health,
+      stamina: data.stamina,
+      score: data.score
+    };
   }
 
   updateGameState(state) {
