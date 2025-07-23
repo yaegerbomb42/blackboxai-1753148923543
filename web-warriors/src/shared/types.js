@@ -1,82 +1,58 @@
-export interface Vector3 {
-  x: number;
-  y: number;
-  z: number;
-}
+// Type definitions for JavaScript (for documentation purposes)
 
-export interface PlayerState {
-  id: string;
-  position: Vector3;
-  rotation: Vector3;
-  health: number;
-  stamina: number;
-  score: number;
-  isClimbing: boolean;
-  isSwinging: boolean;
-  webTarget?: Vector3;
-}
+export const FlyType = {
+  COMMON: 'common',
+  FAST: 'fast',
+  RARE: 'rare',
+  GOLDEN: 'golden',
+};
 
-export interface GameState {
-  players: Map<string, PlayerState>;
-  flies: FlyState[];
-  gameTime: number;
-  gameMode: GameMode;
-}
+export const GameMode = {
+  SINGLE_PLAYER: 'singleplayer',
+  COOPERATIVE: 'cooperative',
+  COMPETITIVE: 'competitive',
+};
 
-export interface FlyState {
-  id: string;
-  position: Vector3;
-  velocity: Vector3;
-  type: FlyType;
-  points: number;
-}
+// Example objects for reference
+export const exampleVector3 = {
+  x: 0,
+  y: 0,
+  z: 0,
+};
 
-export enum FlyType {
-  COMMON = 'common',
-  FAST = 'fast',
-  RARE = 'rare',
-  GOLDEN = 'golden'
-}
+export const examplePlayerState = {
+  id: '',
+  position: { x: 0, y: 0, z: 0 },
+  rotation: { x: 0, y: 0, z: 0 },
+  health: 100,
+  stamina: 100,
+  score: 0,
+  isClimbing: false,
+  isSwinging: false,
+  webTarget: null,
+};
 
-export enum GameMode {
-  SINGLE_PLAYER = 'singleplayer',
-  COOPERATIVE = 'cooperative',
-  COMPETITIVE = 'competitive'
-}
+export const exampleFlyState = {
+  id: '',
+  position: { x: 0, y: 0, z: 0 },
+  velocity: { x: 0, y: 0, z: 0 },
+  type: FlyType.COMMON,
+  points: 10,
+};
 
-export interface InputState {
-  forward: boolean;
-  backward: boolean;
-  left: boolean;
-  right: boolean;
-  jump: boolean;
-  shoot: boolean;
-  mouseX: number;
-  mouseY: number;
-}
+export const exampleInputState = {
+  forward: false,
+  backward: false,
+  left: false,
+  right: false,
+  jump: false,
+  shoot: false,
+  mouseX: 0,
+  mouseY: 0,
+};
 
-export interface NetworkMessage {
-  type: string;
-  data: any;
-  timestamp: number;
-}
-
-export interface GameConfig {
-  physics: {
-    gravity: number;
-    webStrength: number;
-    climbSpeed: number;
-    jumpForce: number;
-  };
-  gameplay: {
-    maxHealth: number;
-    maxStamina: number;
-    webCooldown: number;
-    flyRespawnTime: number;
-  };
-  graphics: {
-    renderDistance: number;
-    shadowQuality: 'low' | 'medium' | 'high';
-    particleCount: number;
-  };
-}
+export const exampleNetworkMessage = {
+  type: '',
+  data: null,
+  timestamp: 0,
+};

@@ -15,20 +15,20 @@ class Game {
 
   async init() {
     console.log('Initializing Web Warriors...');
-    
+
     try {
       // Show loading screen
       this.loadingManager.show();
-      
+
       // Initialize socket connection
       await this.initSocket();
       this.loadingManager.updateProgress(20, 'Connecting to server...');
-      
+
       // Initialize game engine
       this.engine = new GameEngine();
       await this.engine.init();
       this.loadingManager.updateProgress(80, 'Loading game assets...');
-      
+
       // Start game loop
       this.startGameLoop();
       this.loadingManager.updateProgress(100, 'Ready!');
@@ -41,10 +41,9 @@ class Game {
           this.engine.uiManager.updateConnectionStatus(this.isConnected);
         }
       }, 500);
-      
+
       this.isInitialized = true;
       console.log('Game initialized successfully!');
-      
     } catch (error) {
       console.error('Failed to initialize game:', error);
     }
@@ -78,13 +77,13 @@ class Game {
           this.engine.uiManager.updateConnectionStatus(false);
         }
       });
-      
+
       this.socket.on('playerUpdate', (data) => {
         if (this.engine) {
           this.engine.updatePlayer(data);
         }
       });
-      
+
       this.socket.on('gameState', (state) => {
         if (this.engine) {
           this.engine.updateGameState(state);
@@ -96,13 +95,13 @@ class Game {
   startGameLoop() {
     const animate = () => {
       requestAnimationFrame(animate);
-      
+
       if (this.engine && this.isInitialized) {
         this.engine.update();
         this.engine.render();
       }
     };
-    
+
     animate();
   }
 
@@ -117,7 +116,7 @@ class Game {
 window.addEventListener('load', () => {
   const game = new Game();
   window.game = game;
-  game.init().catch(error => {
+  game.init().catch((error) => {
     console.error('Failed to start game:', error);
     // Show error message to user
     const errorDiv = document.createElement('div');
@@ -160,7 +159,12 @@ window.addEventListener('resize', () => {
 
 // Handle pause/resume with Escape key
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && window.game && window.game.engine && window.game.engine.uiManager) {
+  if (
+    e.key === 'Escape' &&
+    window.game &&
+    window.game.engine &&
+    window.game.engine.uiManager
+  ) {
     e.preventDefault();
     if (window.game.engine.uiManager.isPaused) {
       window.game.engine.uiManager.hidePauseMenu();

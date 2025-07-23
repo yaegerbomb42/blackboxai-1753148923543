@@ -22,7 +22,9 @@ describe('GameEngine', () => {
   test('should update game state', () => {
     const initialScore = engine.gameState.score;
     engine.catchFly = jest.fn();
-    engine.flyManager.flies = [{ points: 10, mesh: { position: { distanceTo: () => 0.1 } } }];
+    engine.flyManager.flies = [
+      { points: 10, mesh: { position: { distanceTo: () => 0.1 } } },
+    ];
     engine.spider = { mesh: { position: { distanceTo: () => 0.1 } } };
     engine.checkCollisions();
     expect(engine.catchFly).toHaveBeenCalled();
@@ -35,7 +37,7 @@ describe('GameEngine', () => {
       rotation: { _x: 0, _y: 0, _z: 0, _w: 1 },
       health: 100,
       stamina: 100,
-      score: 0
+      score: 0,
     };
     engine.updatePlayer(playerData);
     expect(engine.gameState.players.has('player1')).toBe(true);

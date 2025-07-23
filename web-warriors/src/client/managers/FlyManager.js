@@ -42,35 +42,35 @@ export class FlyManager {
 
   createFly(type) {
     const config = FLY_CONFIGS[type];
-    
+
     // Create fly mesh
     const geometry = new THREE.SphereGeometry(config.size, 8, 6);
-    const material = new THREE.MeshLambertMaterial({ 
+    const material = new THREE.MeshLambertMaterial({
       color: config.color,
       emissive: config.color,
-      emissiveIntensity: 0.2
+      emissiveIntensity: 0.2,
     });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
-    
+
     // Add wings
     const wingGroup = this.createWings(config);
     mesh.add(wingGroup);
-    
+
     // Random position in room
     const position = this.getRandomFlyPosition();
     mesh.position.copy(position);
-    
+
     // Create physics body
     const shape = new CANNON.Sphere(config.size);
     const body = new CANNON.Body({ mass: 0.01 }); // Very light
     body.addShape(shape);
     body.position.set(position.x, position.y, position.z);
-    
+
     // Random initial velocity
     const velocity = MathUtils.randomVector3(config.speed);
     body.velocity.set(velocity.x, velocity.y, velocity.z);
-    
+
     return {
       mesh,
       body,
@@ -79,32 +79,35 @@ export class FlyManager {
       speed: config.speed,
       direction: new THREE.Vector3().randomDirection(),
       changeDirectionTimer: 0,
-      wingAnimation: 0
+      wingAnimation: 0,
     };
   }
 
   createWings(config) {
     const wingGroup = new THREE.Group();
-    const wingGeometry = new THREE.PlaneGeometry(config.size * 1.5, config.size * 0.5);
-    const wingMaterial = new THREE.MeshLambertMaterial({ 
+    const wingGeometry = new THREE.PlaneGeometry(
+      config.size * 1.5,
+      config.size * 0.5
+    );
+    const wingMaterial = new THREE.MeshLambertMaterial({
       color: 0xffffff,
       transparent: true,
       opacity: 0.7,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     });
-    
+
     // Left wing
     const leftWing = new THREE.Mesh(wingGeometry, wingMaterial);
     leftWing.position.set(-config.size * 0.7, 0, 0);
     leftWing.rotation.y = Math.PI / 4;
     wingGroup.add(leftWing);
-    
+
     // Right wing
     const rightWing = new THREE.Mesh(wingGeometry, wingMaterial);
     rightWing.position.set(config.size * 0.7, 0, 0);
     rightWing.rotation.y = -Math.PI / 4;
     wingGroup.add(rightWing);
-    
+
     return wingGroup;
   }
 
@@ -120,14 +123,14 @@ export class FlyManager {
   weightedRandomSelect(items, weights) {
     const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
     let random = Math.random() * totalWeight;
-    
+
     for (let i = 0; i < items.length; i++) {
       random -= weights[i];
       if (random <= 0) {
         return items[i];
       }
     }
-    
+
     return items[0]; // Fallback
   }
 
@@ -148,7 +151,7 @@ export class FlyManager {
         wing.rotation.z = wingOffset * (index === 0 ? 1 : -1);
       });
     }
-    
+
     // Update AI behavior
     fly.changeDirectionTimer -= deltaTime;
     if (fly.changeDirectionTimer <= 0) {
@@ -156,21 +159,21 @@ export class FlyManager {
       fly.direction = new THREE.Vector3().randomDirection();
       fly.changeDirectionTimer = MathUtils.randomInRange(1, 3);
     }
-    
+
     // Apply movement
     const force = fly.direction.clone().multiplyScalar(fly.speed * 0.1);
     fly.body.applyForce(
       new CANNON.Vec3(force.x, force.y, force.z),
       fly.body.position
     );
-    
+
     // Apply some air resistance
     fly.body.velocity.scale(0.95, fly.body.velocity);
-    
+
     // Sync mesh with physics
     fly.mesh.position.copy(fly.body.position);
     fly.mesh.quaternion.copy(fly.body.quaternion);
-    
+
     // Add some random bobbing motion
     fly.mesh.position.y += Math.sin(fly.wingAnimation * 0.5) * 0.05;
   }
@@ -178,7 +181,7 @@ export class FlyManager {
   keepFlyInBounds(fly) {
     const bounds = 18; // Room boundaries
     const position = fly.body.position;
-    
+
     // Bounce off walls by reversing direction
     if (Math.abs(position.x) > bounds) {
       fly.direction.x *= -1;
@@ -192,7 +195,7 @@ export class FlyManager {
       fly.direction.z *= -1;
       fly.body.velocity.z *= -0.5;
     }
-    
+
     // Clamp position
     position.x = MathUtils.clamp(position.x, -bounds, bounds);
     position.y = MathUtils.clamp(position.y, 1, 10);
@@ -202,11 +205,11 @@ export class FlyManager {
   removeFly(index) {
     if (index >= 0 && index < this.flies.length) {
       const fly = this.flies[index];
-      
+
       // Remove from scene and physics
       this.scene.remove(fly.mesh);
       this.physicsWorld.removeBody(fly.body);
-      
+
       // Remove from array
       this.flies.splice(index, 1);
     }

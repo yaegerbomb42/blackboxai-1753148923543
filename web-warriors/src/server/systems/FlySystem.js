@@ -10,30 +10,32 @@ class FlySystem {
 
   init() {
     console.log('Initializing fly system...');
-    
+
     // Spawn initial flies
     for (let i = 0; i < this.maxFlies; i++) {
       this.spawnFly();
     }
-    
+
     console.log(`Spawned ${this.maxFlies} flies`);
   }
 
   update(deltaTime) {
     // Update existing flies
-    this.flies.forEach(fly => {
+    this.flies.forEach((fly) => {
       this.updateFly(fly, deltaTime);
     });
-    
+
     // Spawn new flies if needed
     this.spawnTimer -= deltaTime;
     if (this.spawnTimer <= 0 && this.flies.length < this.maxFlies) {
       this.spawnFly();
       this.spawnTimer = this.spawnInterval;
     }
-    
+
     // Remove flies that are out of bounds or dead
-    this.flies = this.flies.filter(fly => fly.isAlive && this.isInBounds(fly.position));
+    this.flies = this.flies.filter(
+      (fly) => fly.isAlive && this.isInBounds(fly.position)
+    );
   }
 
   spawnFly(type = null) {
@@ -57,7 +59,7 @@ class FlySystem {
       size: config.size,
       isAlive: true,
       changeDirectionTimer: this.randomInRange(1, 3),
-      wingPhase: Math.random() * Math.PI * 2
+      wingPhase: Math.random() * Math.PI * 2,
     };
 
     this.flies.push(fly);
@@ -123,14 +125,16 @@ class FlySystem {
 
   isInBounds(position) {
     const bounds = 20;
-    return Math.abs(position.x) <= bounds && 
-           Math.abs(position.z) <= bounds && 
-           position.y >= 0 && 
-           position.y <= 12;
+    return (
+      Math.abs(position.x) <= bounds &&
+      Math.abs(position.z) <= bounds &&
+      position.y >= 0 &&
+      position.y <= 12
+    );
   }
 
   removeFly(flyId) {
-    const index = this.flies.findIndex(fly => fly.id === flyId);
+    const index = this.flies.findIndex((fly) => fly.id === flyId);
     if (index !== -1) {
       this.flies.splice(index, 1);
       return true;
@@ -159,7 +163,7 @@ class FlySystem {
     return {
       x: this.randomInRange(-15, 15),
       y: this.randomInRange(3, 8),
-      z: this.randomInRange(-15, 15)
+      z: this.randomInRange(-15, 15),
     };
   }
 
@@ -167,7 +171,7 @@ class FlySystem {
     return {
       x: this.randomInRange(-maxSpeed, maxSpeed) * 0.1,
       y: this.randomInRange(-maxSpeed, maxSpeed) * 0.1,
-      z: this.randomInRange(-maxSpeed, maxSpeed) * 0.1
+      z: this.randomInRange(-maxSpeed, maxSpeed) * 0.1,
     };
   }
 
@@ -175,25 +179,25 @@ class FlySystem {
     // Generate random unit vector
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
-    
+
     return {
       x: Math.sin(phi) * Math.cos(theta),
       y: Math.cos(phi),
-      z: Math.sin(phi) * Math.sin(theta)
+      z: Math.sin(phi) * Math.sin(theta),
     };
   }
 
   weightedRandomSelect(items, weights) {
     const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
     let random = Math.random() * totalWeight;
-    
+
     for (let i = 0; i < items.length; i++) {
       random -= weights[i];
       if (random <= 0) {
         return items[i];
       }
     }
-    
+
     return items[0];
   }
 
@@ -206,13 +210,13 @@ class FlySystem {
   }
 
   getFlies() {
-    return this.flies.map(fly => ({
+    return this.flies.map((fly) => ({
       id: fly.id,
       type: fly.type,
       position: fly.position,
       points: fly.points,
       color: fly.color,
-      size: fly.size
+      size: fly.size,
     }));
   }
 

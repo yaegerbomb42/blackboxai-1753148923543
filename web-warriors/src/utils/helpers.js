@@ -15,12 +15,14 @@ export class MathUtils {
   }
 
   static normalize(vector) {
-    const length = Math.sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+    const length = Math.sqrt(
+      vector.x * vector.x + vector.y * vector.y + vector.z * vector.z
+    );
     if (length === 0) return { x: 0, y: 0, z: 0 };
     return {
       x: vector.x / length,
       y: vector.y / length,
-      z: vector.z / length
+      z: vector.z / length,
     };
   }
 
@@ -32,7 +34,7 @@ export class MathUtils {
     return {
       x: (Math.random() - 0.5) * range,
       y: (Math.random() - 0.5) * range,
-      z: (Math.random() - 0.5) * range
+      z: (Math.random() - 0.5) * range,
     };
   }
 }
@@ -51,13 +53,13 @@ export class EventEmitter {
 
   off(event, callback) {
     if (this.events[event]) {
-      this.events[event] = this.events[event].filter(cb => cb !== callback);
+      this.events[event] = this.events[event].filter((cb) => cb !== callback);
     }
   }
 
   emit(event, ...args) {
     if (this.events[event]) {
-      this.events[event].forEach(callback => callback(...args));
+      this.events[event].forEach((callback) => callback(...args));
     }
   }
 }
@@ -85,7 +87,7 @@ export class Timer {
   }
 
   clearAll() {
-    this.timers.forEach(timer => clearTimeout(timer));
+    this.timers.forEach((timer) => clearTimeout(timer));
     this.timers.clear();
   }
 }

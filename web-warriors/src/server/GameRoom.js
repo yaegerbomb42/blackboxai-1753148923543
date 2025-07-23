@@ -16,16 +16,16 @@ class GameRoom {
 
     this.players.set(player.id, player);
     player.setRoom(this);
-    
+
     console.log(`Player ${player.name} joined room ${this.name}`);
-    
+
     // Notify other players in the room
     this.broadcastToOthers(player.id, 'playerJoinedRoom', {
       playerId: player.id,
       playerName: player.name,
-      roomId: this.id
+      roomId: this.id,
     });
-    
+
     return true;
   }
 
@@ -34,42 +34,45 @@ class GameRoom {
     if (player) {
       this.players.delete(playerId);
       player.setRoom(null);
-      
+
       console.log(`Player ${player.name} left room ${this.name}`);
-      
+
       // Notify other players
       this.broadcastToOthers(playerId, 'playerLeftRoom', {
         playerId: playerId,
-        roomId: this.id
+        roomId: this.id,
       });
-      
+
       return true;
     }
-    
+
     return false;
   }
 
   update(deltaTime) {
     // Update all players in the room
-    this.players.forEach(player => {
+    this.players.forEach((player) => {
       player.update(deltaTime);
     });
-    
+
     // Check for player interactions, collisions, etc.
     this.checkPlayerInteractions();
   }
 
   checkPlayerInteractions() {
     const playerArray = Array.from(this.players.values());
-    
+
     // Check for player-player interactions
     for (let i = 0; i < playerArray.length; i++) {
       for (let j = i + 1; j < playerArray.length; j++) {
         const player1 = playerArray[i];
         const player2 = playerArray[j];
-        
-        const distance = this.calculateDistance(player1.position, player2.position);
-        
+
+        const distance = this.calculateDistance(
+          player1.position,
+          player2.position
+        );
+
         // Players can help each other if close enough
         if (distance < 2) {
           this.handlePlayerProximity(player1, player2);
@@ -99,24 +102,24 @@ class GameRoom {
   handleWebShoot(player, webData) {
     // Process web shooting for the player
     const currentTime = Date.now();
-    
+
     if (currentTime - player.lastWebShot < 1000) {
       return; // Cooldown not met
     }
-    
+
     player.shootWeb();
-    
+
     // Broadcast web shot to other players in room
     this.broadcastToOthers(player.id, 'playerShotWeb', {
       playerId: player.id,
       startPosition: player.position,
       targetPosition: player.webTarget,
-      timestamp: currentTime
+      timestamp: currentTime,
     });
   }
 
   broadcastMessage(message) {
-    this.players.forEach(player => {
+    this.players.forEach((player) => {
       player.socket.emit('roomMessage', message);
     });
   }
@@ -130,7 +133,7 @@ class GameRoom {
   }
 
   broadcastToAll(event, data) {
-    this.players.forEach(player => {
+    this.players.forEach((player) => {
       player.socket.emit(event, data);
     });
   }
@@ -159,7 +162,7 @@ class GameRoom {
       maxPlayers: this.maxPlayers,
       gameMode: this.gameMode,
       isActive: this.isActive,
-      createdAt: this.createdAt
+      createdAt: this.createdAt,
     };
   }
 
@@ -170,12 +173,12 @@ class GameRoom {
 
   close() {
     this.isActive = false;
-    
+
     // Notify all players
     this.broadcastToAll('roomClosed', { roomId: this.id });
-    
+
     // Remove all players
-    this.players.forEach(player => {
+    this.players.forEach((player) => {
       this.removePlayer(player.id);
     });
   }

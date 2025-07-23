@@ -14,7 +14,7 @@ export class GameEngine {
   constructor() {
     this.renderer = null;
     this.clock = new THREE.Clock();
-    
+
     // Managers
     this.sceneManager = new SceneManager();
     this.physicsManager = new PhysicsManager();
@@ -23,116 +23,124 @@ export class GameEngine {
     this.flyManager = new FlyManager();
     this.webManager = new WebManager();
     this.uiManager = new UIManager();
-    
+
     // Entities
     this.spider = null;
-    
+
     // Game state
     this.gameState = {
       players: new Map(),
       flies: [],
-      score: 0
+      score: 0,
     };
   }
 
   async init() {
     console.log('Initializing game engine...');
-    
+
     try {
       // Initialize renderer
       this.initRenderer();
-      
+
       // Initialize managers
       await this.sceneManager.init();
       this.physicsManager.init();
       this.inputManager.init();
       this.cameraManager.init(this.renderer);
-      
+
       // Create spider player
       this.spider = new SpiderController();
-      await this.spider.init(this.sceneManager.scene, this.cameraManager.camera);
+      await this.spider.init(
+        this.sceneManager.scene,
+        this.cameraManager.camera
+      );
       this.sceneManager.add(this.spider.mesh);
       this.physicsManager.addBody(this.spider.body);
-      
+
       // Set up spider death callback
       this.spider.onDeath = () => {
         this.handlePlayerDeath();
       };
-      
+
       // Initialize other managers
       this.flyManager.init(this.sceneManager, this.physicsManager);
       this.webManager.init(this.sceneManager, this.physicsManager);
       this.uiManager.init();
-      
+
       // Setup camera to follow spider
       this.cameraManager.setTarget(this.spider.mesh);
-      
+
       // Spawn initial flies
       this.flyManager.spawnFlies(GAME_CONFIG.gameplay.flyCount);
-      
+
       console.log('Game engine initialized');
     } catch (error) {
       console.error('Failed to initialize game engine:', error);
-      this.uiManager.displayError('Failed to initialize game. Please refresh the page.');
+      this.uiManager.displayError(
+        'Failed to initialize game. Please refresh the page.'
+      );
       throw error;
     }
   }
 
   initRenderer() {
     const container = document.getElementById('gameContainer');
-    
-    this.renderer = new THREE.WebGLRenderer({ 
+
+    this.renderer = new THREE.WebGLRenderer({
       antialias: true,
-      alpha: false
+      alpha: false,
     });
-    
+
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setClearColor(0x87CEEB, 1); // Sky blue
+    this.renderer.setClearColor(0x87ceeb, 1); // Sky blue
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    
+
     container.appendChild(this.renderer.domElement);
   }
 
   update() {
     try {
       const deltaTime = this.clock.getDelta();
-      
+
       // Skip update if game is paused
       if (this.uiManager.isPaused) {
         return;
       }
-      
+
       // Update physics
       this.physicsManager.update(deltaTime);
-      
+
       // Update input
       this.inputManager.update();
-      
+
       // Update spider
       if (this.spider && !this.spider.isDead) {
         this.spider.update(deltaTime, this.inputManager.getInputState());
       }
-      
+
       // Update camera
       this.cameraManager.update(deltaTime, this.inputManager.getInputState());
-      
+
       // Update flies
       this.flyManager.update(deltaTime);
-      
+
       // Update web system
       this.webManager.update(deltaTime);
-      
+
       // Check for collisions
       this.checkCollisions();
-      
+
       // Update UI
       this.updateUI();
-      
+
       // Update minimap
       if (this.spider) {
-        this.uiManager.updateMinimap(this.spider.getPosition(), this.flyManager.getFlies());
+        this.uiManager.updateMinimap(
+          this.spider.getPosition(),
+          this.flyManager.getFlies()
+        );
       }
     } catch (error) {
       console.error('Game loop error:', error);
@@ -151,14 +159,15 @@ export class GameEngine {
   checkCollisions() {
     // Check spider-fly collisions
     const spiderPosition = this.spider.mesh.position;
-    
+
     this.flyManager.flies.forEach((fly, index) => {
       const distance = spiderPosition.distanceTo(fly.mesh.position);
-      if (distance < 0.5) { // Collision threshold
+      if (distance < 0.5) {
+        // Collision threshold
         this.catchFly(index);
       }
     });
-    
+
     // Check web-fly collisions
     this.webManager.checkFlyCollisions(this.flyManager.flies, (flyIndex) => {
       this.catchFly(flyIndex);
@@ -185,7 +194,7 @@ export class GameEngine {
   handlePlayerDeath() {
     console.log('Player died - showing game over screen');
     this.uiManager.showGameOver(this.gameState.score);
-    
+
     // Respawn after delay
     setTimeout(() => {
       if (this.spider) {
@@ -204,8 +213,17 @@ export class GameEngine {
         const player = this.gameState.players.get(data.id);
         // Update player position, rotation, health, stamina, etc.
         if (player.mesh) {
-          player.mesh.position.set(data.position.x, data.position.y, data.position.z);
-          player.mesh.quaternion.set(data.rotation._x, data.rotation._y, data.rotation._z, data.rotation._w);
+          player.mesh.position.set(
+            data.position.x,
+            data.position.y,
+            data.position.z
+          );
+          player.mesh.quaternion.set(
+            data.rotation._x,
+            data.rotation._y,
+            data.rotation._z,
+            data.rotation._w
+          );
         }
         player.health = data.health;
         player.stamina = data.stamina;
@@ -232,7 +250,7 @@ export class GameEngine {
       mesh: mesh,
       health: data.health,
       stamina: data.stamina,
-      score: data.score
+      score: data.score,
     };
   }
 
@@ -244,7 +262,7 @@ export class GameEngine {
   handleResize() {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    
+
     this.cameraManager.camera.aspect = width / height;
     this.cameraManager.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
