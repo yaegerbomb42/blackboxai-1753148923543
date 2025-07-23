@@ -12,31 +12,31 @@ export class UIManager {
 
   init() {
     console.log('Initializing UI manager...');
-    
+
     // Get existing UI elements
     this.healthElement = document.getElementById('healthValue');
     this.staminaElement = document.getElementById('staminaValue');
     this.scoreElement = document.getElementById('scoreValue');
     this.minimapCanvas = document.getElementById('minimapCanvas');
-    
+
     if (this.minimapCanvas) {
       this.minimapContext = this.minimapCanvas.getContext('2d');
       this.initMinimap();
     }
-    
+
     // Create modern UI elements
     this.createModernUI();
-    
+
     console.log('UI manager initialized');
   }
 
   initMinimap() {
     if (!this.minimapContext) return;
-    
+
     // Set up minimap
     this.minimapContext.fillStyle = '#000';
     this.minimapContext.fillRect(0, 0, 196, 196);
-    
+
     // Draw room outline
     this.minimapContext.strokeStyle = '#fff';
     this.minimapContext.lineWidth = 2;
@@ -46,7 +46,7 @@ export class UIManager {
   updateHealth(health) {
     if (this.healthElement) {
       this.healthElement.textContent = Math.round(health);
-      
+
       // Change color based on health
       const healthBar = this.healthElement.parentElement.parentElement;
       if (health < 30) {
@@ -62,7 +62,7 @@ export class UIManager {
   updateStamina(stamina) {
     if (this.staminaElement) {
       this.staminaElement.textContent = Math.round(stamina);
-      
+
       // Change color based on stamina
       const staminaBar = this.staminaElement.parentElement.parentElement;
       if (stamina < 20) {
@@ -81,36 +81,42 @@ export class UIManager {
 
   updateMinimap(playerPosition, flies = [], otherPlayers = []) {
     if (!this.minimapContext) return;
-    
+
     // Clear minimap
     this.minimapContext.fillStyle = '#000';
     this.minimapContext.fillRect(0, 0, 196, 196);
-    
+
     // Draw room outline
     this.minimapContext.strokeStyle = '#fff';
     this.minimapContext.lineWidth = 2;
     this.minimapContext.strokeRect(10, 10, 176, 176);
-    
+
     // Convert world coordinates to minimap coordinates
     const worldToMinimap = (worldPos) => {
       const roomSize = 40; // World room size
       const mapSize = 176; // Minimap room size
       const scale = mapSize / roomSize;
-      
+
       return {
-        x: 10 + (worldPos.x + roomSize/2) * scale,
-        y: 10 + (worldPos.z + roomSize/2) * scale // Note: using z for y in 2D map
+        x: 10 + (worldPos.x + roomSize / 2) * scale,
+        y: 10 + (worldPos.z + roomSize / 2) * scale, // Note: using z for y in 2D map
       };
     };
-    
+
     // Draw player
     if (playerPosition) {
       const playerMapPos = worldToMinimap(playerPosition);
       this.minimapContext.fillStyle = '#00ff00';
       this.minimapContext.beginPath();
-      this.minimapContext.arc(playerMapPos.x, playerMapPos.y, 4, 0, Math.PI * 2);
+      this.minimapContext.arc(
+        playerMapPos.x,
+        playerMapPos.y,
+        4,
+        0,
+        Math.PI * 2
+      );
       this.minimapContext.fill();
-      
+
       // Draw player direction indicator
       this.minimapContext.strokeStyle = '#00ff00';
       this.minimapContext.lineWidth = 2;
@@ -119,22 +125,28 @@ export class UIManager {
       this.minimapContext.lineTo(playerMapPos.x, playerMapPos.y - 8);
       this.minimapContext.stroke();
     }
-    
+
     // Draw flies
-    flies.forEach(fly => {
+    flies.forEach((fly) => {
       const flyMapPos = worldToMinimap(fly.mesh.position);
       this.minimapContext.fillStyle = '#ffff00';
       this.minimapContext.beginPath();
       this.minimapContext.arc(flyMapPos.x, flyMapPos.y, 2, 0, Math.PI * 2);
       this.minimapContext.fill();
     });
-    
+
     // Draw other players
-    otherPlayers.forEach(player => {
+    otherPlayers.forEach((player) => {
       const playerMapPos = worldToMinimap(player.position);
       this.minimapContext.fillStyle = '#ff0000';
       this.minimapContext.beginPath();
-      this.minimapContext.arc(playerMapPos.x, playerMapPos.y, 3, 0, Math.PI * 2);
+      this.minimapContext.arc(
+        playerMapPos.x,
+        playerMapPos.y,
+        3,
+        0,
+        Math.PI * 2
+      );
       this.minimapContext.fill();
     });
   }
@@ -151,17 +163,21 @@ export class UIManager {
       border: '2px solid rgba(255, 255, 255, 0.8)',
       borderRadius: '50%',
       pointerEvents: 'none',
-      zIndex: '50'
+      zIndex: '50',
     });
 
     // Create notification container
-    this.elements.notificationContainer = this.createElement('div', 'notification-container', {
-      position: 'fixed',
-      top: '20px',
-      right: '20px',
-      zIndex: '200',
-      maxWidth: '300px'
-    });
+    this.elements.notificationContainer = this.createElement(
+      'div',
+      'notification-container',
+      {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        zIndex: '200',
+        maxWidth: '300px',
+      }
+    );
 
     // Add elements to DOM
     document.body.appendChild(this.elements.crosshair);
@@ -171,30 +187,35 @@ export class UIManager {
   createElement(tag, id, styles = {}, textContent = '') {
     const element = document.createElement(tag);
     element.id = id;
-    
+
     Object.assign(element.style, styles);
-    
+
     if (textContent) {
       element.textContent = textContent;
     }
-    
+
     return element;
   }
 
   createButton(text, onClick) {
-    const button = this.createElement('button', `btn-${text.toLowerCase().replace(/\s+/g, '-')}`, {
-      background: 'rgba(255, 255, 255, 0.1)',
-      border: '2px solid rgba(255, 255, 255, 0.3)',
-      color: '#ffffff',
-      padding: '12px 24px',
-      margin: '8px',
-      borderRadius: '8px',
-      fontSize: '16px',
-      cursor: 'pointer',
-      fontFamily: 'Arial, sans-serif',
-      transition: 'all 0.3s ease',
-      minWidth: '120px'
-    }, text);
+    const button = this.createElement(
+      'button',
+      `btn-${text.toLowerCase().replace(/\s+/g, '-')}`,
+      {
+        background: 'rgba(255, 255, 255, 0.1)',
+        border: '2px solid rgba(255, 255, 255, 0.3)',
+        color: '#ffffff',
+        padding: '12px 24px',
+        margin: '8px',
+        borderRadius: '8px',
+        fontSize: '16px',
+        cursor: 'pointer',
+        fontFamily: 'Arial, sans-serif',
+        transition: 'all 0.3s ease',
+        minWidth: '120px',
+      },
+      text
+    );
 
     button.addEventListener('mouseenter', () => {
       button.style.background = 'rgba(255, 255, 255, 0.2)';
@@ -212,11 +233,11 @@ export class UIManager {
 
   showGameOver(score, reason = 'Game Over') {
     this.isGameOver = true;
-    
+
     // Remove existing game over screen
     const existing = document.getElementById('modern-gameover-overlay');
     if (existing) existing.remove();
-    
+
     // Create modern game over overlay
     const overlay = this.createElement('div', 'modern-gameover-overlay', {
       position: 'fixed',
@@ -229,7 +250,7 @@ export class UIManager {
       justifyContent: 'center',
       alignItems: 'center',
       zIndex: '1000',
-      backdropFilter: 'blur(5px)'
+      backdropFilter: 'blur(5px)',
     });
 
     // Game over container
@@ -241,27 +262,41 @@ export class UIManager {
       color: '#ffffff',
       fontFamily: 'Arial, sans-serif',
       minWidth: '350px',
-      border: '2px solid rgba(255, 255, 255, 0.1)'
+      border: '2px solid rgba(255, 255, 255, 0.1)',
     });
 
     // Title
-    const title = this.createElement('h2', 'gameover-title', {
-      margin: '0 0 20px 0',
-      fontSize: '32px',
-      fontWeight: 'normal',
-      color: '#ff4444'
-    }, reason);
+    const title = this.createElement(
+      'h2',
+      'gameover-title',
+      {
+        margin: '0 0 20px 0',
+        fontSize: '32px',
+        fontWeight: 'normal',
+        color: '#ff4444',
+      },
+      reason
+    );
 
     // Score
-    const scoreDisplay = this.createElement('div', 'final-score-display', {
-      fontSize: '18px',
-      marginBottom: '30px',
-      color: '#cccccc'
-    }, `Final Score: ${score}`);
+    const scoreDisplay = this.createElement(
+      'div',
+      'final-score-display',
+      {
+        fontSize: '18px',
+        marginBottom: '30px',
+        color: '#cccccc',
+      },
+      `Final Score: ${score}`
+    );
 
     // Buttons
-    const respawnButton = this.createButton('Respawn', () => this.hideGameOver());
-    const restartButton = this.createButton('Restart Game', () => this.restartGame());
+    const respawnButton = this.createButton('Respawn', () =>
+      this.hideGameOver()
+    );
+    const restartButton = this.createButton('Restart Game', () =>
+      this.restartGame()
+    );
 
     // Assemble
     container.appendChild(title);
@@ -269,7 +304,7 @@ export class UIManager {
     container.appendChild(respawnButton);
     container.appendChild(restartButton);
     overlay.appendChild(container);
-    
+
     document.body.appendChild(overlay);
     document.body.style.cursor = 'default';
   }
@@ -285,11 +320,11 @@ export class UIManager {
 
   showPauseMenu() {
     this.isPaused = true;
-    
+
     // Remove existing pause menu
     const existing = document.getElementById('modern-pause-overlay');
     if (existing) existing.remove();
-    
+
     // Create modern pause overlay
     const overlay = this.createElement('div', 'modern-pause-overlay', {
       position: 'fixed',
@@ -302,7 +337,7 @@ export class UIManager {
       justifyContent: 'center',
       alignItems: 'center',
       zIndex: '1000',
-      backdropFilter: 'blur(5px)'
+      backdropFilter: 'blur(5px)',
     });
 
     // Pause menu container
@@ -314,20 +349,31 @@ export class UIManager {
       color: '#ffffff',
       fontFamily: 'Arial, sans-serif',
       minWidth: '300px',
-      border: '2px solid rgba(255, 255, 255, 0.1)'
+      border: '2px solid rgba(255, 255, 255, 0.1)',
     });
 
     // Title
-    const title = this.createElement('h2', 'pause-title', {
-      margin: '0 0 30px 0',
-      fontSize: '28px',
-      fontWeight: 'normal'
-    }, 'Game Paused');
+    const title = this.createElement(
+      'h2',
+      'pause-title',
+      {
+        margin: '0 0 30px 0',
+        fontSize: '28px',
+        fontWeight: 'normal',
+      },
+      'Game Paused'
+    );
 
     // Buttons
-    const resumeButton = this.createButton('Resume', () => this.hidePauseMenu());
-    const restartButton = this.createButton('Restart', () => this.restartGame());
-    const settingsButton = this.createButton('Settings', () => this.showSettings());
+    const resumeButton = this.createButton('Resume', () =>
+      this.hidePauseMenu()
+    );
+    const restartButton = this.createButton('Restart', () =>
+      this.restartGame()
+    );
+    const settingsButton = this.createButton('Settings', () =>
+      this.showSettings()
+    );
 
     // Assemble
     container.appendChild(title);
@@ -335,14 +381,14 @@ export class UIManager {
     container.appendChild(restartButton);
     container.appendChild(settingsButton);
     overlay.appendChild(container);
-    
+
     // Handle clicks outside menu to resume
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         this.hidePauseMenu();
       }
     });
-    
+
     document.body.appendChild(overlay);
     document.body.style.cursor = 'default';
   }
@@ -357,19 +403,24 @@ export class UIManager {
   }
 
   showNotification(message, type = 'info', duration = 3000) {
-    const notification = this.createElement('div', `notification-${Date.now()}`, {
-      background: this.getNotificationColor(type),
-      color: '#ffffff',
-      padding: '12px 16px',
-      marginBottom: '8px',
-      borderRadius: '6px',
-      fontSize: '14px',
-      fontFamily: 'Arial, sans-serif',
-      opacity: '0',
-      transform: 'translateX(100%)',
-      transition: 'all 0.3s ease',
-      border: `2px solid ${this.getNotificationBorderColor(type)}`
-    }, message);
+    const notification = this.createElement(
+      'div',
+      `notification-${Date.now()}`,
+      {
+        background: this.getNotificationColor(type),
+        color: '#ffffff',
+        padding: '12px 16px',
+        marginBottom: '8px',
+        borderRadius: '6px',
+        fontSize: '14px',
+        fontFamily: 'Arial, sans-serif',
+        opacity: '0',
+        transform: 'translateX(100%)',
+        transition: 'all 0.3s ease',
+        border: `2px solid ${this.getNotificationBorderColor(type)}`,
+      },
+      message
+    );
 
     this.elements.notificationContainer.appendChild(notification);
 
@@ -393,19 +444,27 @@ export class UIManager {
 
   getNotificationColor(type) {
     switch (type) {
-      case 'error': return 'rgba(255, 68, 68, 0.9)';
-      case 'success': return 'rgba(68, 255, 68, 0.9)';
-      case 'info': return 'rgba(68, 136, 255, 0.9)';
-      default: return 'rgba(68, 136, 255, 0.9)';
+      case 'error':
+        return 'rgba(255, 68, 68, 0.9)';
+      case 'success':
+        return 'rgba(68, 255, 68, 0.9)';
+      case 'info':
+        return 'rgba(68, 136, 255, 0.9)';
+      default:
+        return 'rgba(68, 136, 255, 0.9)';
     }
   }
 
   getNotificationBorderColor(type) {
     switch (type) {
-      case 'error': return 'rgba(255, 68, 68, 0.5)';
-      case 'success': return 'rgba(68, 255, 68, 0.5)';
-      case 'info': return 'rgba(68, 136, 255, 0.5)';
-      default: return 'rgba(68, 136, 255, 0.5)';
+      case 'error':
+        return 'rgba(255, 68, 68, 0.5)';
+      case 'success':
+        return 'rgba(68, 255, 68, 0.5)';
+      case 'info':
+        return 'rgba(68, 136, 255, 0.5)';
+      default:
+        return 'rgba(68, 136, 255, 0.5)';
     }
   }
 
@@ -441,7 +500,9 @@ export class UIManager {
   }
 
   updateConnectionStatus(connected) {
-    const indicator = document.getElementById('connectionIndicator') || this.createConnectionIndicator();
+    const indicator =
+      document.getElementById('connectionIndicator') ||
+      this.createConnectionIndicator();
     indicator.style.background = connected ? '#4CAF50' : '#f44336';
     indicator.title = connected ? 'Connected' : 'Disconnected';
   }

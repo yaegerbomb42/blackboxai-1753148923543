@@ -8,7 +8,7 @@ export class InputManager {
       y: 0,
       deltaX: 0,
       deltaY: 0,
-      buttons: {}
+      buttons: {},
     };
     this.gamepad = null;
     this.inputState = {
@@ -19,39 +19,39 @@ export class InputManager {
       jump: false,
       shoot: false,
       mouseX: 0,
-      mouseY: 0
+      mouseY: 0,
     };
-    
+
     this.isPointerLocked = false;
     this.canvas = null;
   }
 
   init() {
     console.log('Initializing input manager...');
-    
+
     this.canvas = document.querySelector('canvas');
     if (!this.canvas) {
       // If canvas doesn't exist yet, we'll bind to the renderer canvas later
       this.canvas = document.body;
     }
-    
+
     this.bindKeyboardEvents();
     this.bindMouseEvents();
     this.bindGamepadEvents();
     this.bindPointerLockEvents();
-    
+
     console.log('Input manager initialized');
   }
 
   bindKeyboardEvents() {
     document.addEventListener('keydown', (event) => {
       this.keys[event.code] = true;
-      
+
       // Prevent default for game keys
       if (this.isGameKey(event.code)) {
         event.preventDefault();
       }
-      
+
       // Handle special keys
       if (event.code === 'Escape') {
         this.exitPointerLock();
@@ -70,14 +70,16 @@ export class InputManager {
 
     document.addEventListener('mousemove', (event) => {
       if (this.isPointerLocked) {
-        this.mouse.deltaX = event.movementX * GAME_CONFIG.controls.mouseSensitivity;
-        this.mouse.deltaY = event.movementY * GAME_CONFIG.controls.mouseSensitivity;
+        this.mouse.deltaX =
+          event.movementX * GAME_CONFIG.controls.mouseSensitivity;
+        this.mouse.deltaY =
+          event.movementY * GAME_CONFIG.controls.mouseSensitivity;
       }
     });
 
     document.addEventListener('mousedown', (event) => {
       this.mouse.buttons[event.button] = true;
-      
+
       if (this.isPointerLocked) {
         event.preventDefault();
       }
@@ -110,7 +112,7 @@ export class InputManager {
   bindPointerLockEvents() {
     document.addEventListener('pointerlockchange', () => {
       this.isPointerLocked = document.pointerLockElement === this.canvas;
-      
+
       if (this.isPointerLocked) {
         console.log('Pointer locked');
       } else {
@@ -137,10 +139,15 @@ export class InputManager {
 
   isGameKey(code) {
     const gameKeys = [
-      'KeyW', 'KeyA', 'KeyS', 'KeyD', // Movement
+      'KeyW',
+      'KeyA',
+      'KeyS',
+      'KeyD', // Movement
       'Space', // Jump
-      'ShiftLeft', 'ShiftRight', // Run/Crouch
-      'ControlLeft', 'ControlRight' // Special actions
+      'ShiftLeft',
+      'ShiftRight', // Run/Crouch
+      'ControlLeft',
+      'ControlRight', // Special actions
     ];
     return gameKeys.includes(code);
   }
@@ -165,12 +172,12 @@ export class InputManager {
     // Left stick movement
     const leftStickX = gamepad.axes[0];
     const leftStickY = gamepad.axes[1];
-    
+
     if (Math.abs(leftStickX) > GAME_CONFIG.controls.gamepadDeadzone) {
       this.inputState.left = leftStickX < 0;
       this.inputState.right = leftStickX > 0;
     }
-    
+
     if (Math.abs(leftStickY) > GAME_CONFIG.controls.gamepadDeadzone) {
       this.inputState.forward = leftStickY < 0;
       this.inputState.backward = leftStickY > 0;
@@ -179,13 +186,15 @@ export class InputManager {
     // Right stick camera
     const rightStickX = gamepad.axes[2];
     const rightStickY = gamepad.axes[3];
-    
+
     if (Math.abs(rightStickX) > GAME_CONFIG.controls.gamepadDeadzone) {
-      this.mouse.deltaX = rightStickX * GAME_CONFIG.controls.mouseSensitivity * 10;
+      this.mouse.deltaX =
+        rightStickX * GAME_CONFIG.controls.mouseSensitivity * 10;
     }
-    
+
     if (Math.abs(rightStickY) > GAME_CONFIG.controls.gamepadDeadzone) {
-      this.mouse.deltaY = rightStickY * GAME_CONFIG.controls.mouseSensitivity * 10;
+      this.mouse.deltaY =
+        rightStickY * GAME_CONFIG.controls.mouseSensitivity * 10;
     }
 
     // Buttons
@@ -197,7 +206,7 @@ export class InputManager {
     // Reset mouse delta
     this.mouse.deltaX = 0;
     this.mouse.deltaY = 0;
-    
+
     // Update keyboard input state
     this.inputState.forward = this.keys['KeyW'] || false;
     this.inputState.backward = this.keys['KeyS'] || false;
@@ -205,10 +214,10 @@ export class InputManager {
     this.inputState.right = this.keys['KeyD'] || false;
     this.inputState.jump = this.keys['Space'] || false;
     this.inputState.shoot = this.mouse.buttons[0] || false; // Left mouse button
-    
+
     // Update gamepad input
     this.updateGamepadInput();
-    
+
     // Update mouse position for camera
     this.inputState.mouseX = this.mouse.deltaX;
     this.inputState.mouseY = this.mouse.deltaY;

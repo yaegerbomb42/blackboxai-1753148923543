@@ -25,7 +25,9 @@ describe('SpiderController', () => {
   test('should shoot web and create web attachment', () => {
     // Mock createWebAttachment to track calls
     spider.createWebAttachment = jest.fn();
-    spider.camera.getWorldDirection = jest.fn(() => new THREE.Vector3(0, 0, -1));
+    spider.camera.getWorldDirection = jest.fn(
+      () => new THREE.Vector3(0, 0, -1)
+    );
     spider.mesh.position.set(0, 0, 0);
 
     spider.shootWeb();
