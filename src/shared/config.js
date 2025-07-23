@@ -40,11 +40,23 @@ export const GAME_CONFIG = {
     maxLatency: 200,
     interpolationBuffer: 100
   },
-  // New: Audio configuration
+  // Enhanced: Audio configuration
   audio: {
-    masterVolume: 0.7,
-    sfxVolume: 0.8,
-    ambientVolume: 0.5
+    masterVolume: 0.8,
+    musicVolume: 0.4,
+    sfxVolume: 0.7,
+    ambientVolume: 0.3
+  },
+  // New: Environment configuration for indoor house
+  environment: {
+    roomWidth: 25,
+    roomLength: 25,
+    ceilingHeight: 6,
+    wallThickness: 0.5,
+    furnitureScale: 1.0,
+    numberOfRooms: 4,
+    doorWidth: 2,
+    windowSize: 1.5
   }
 };
 

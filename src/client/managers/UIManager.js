@@ -50,14 +50,22 @@ export class UIManager {
     if (this.healthElement) {
       this.healthElement.textContent = Math.round(health);
       
-      // Change color based on health
-      const healthBar = this.healthElement.parentElement.parentElement;
-      if (health < 30) {
-        healthBar.style.background = 'rgba(255, 0, 0, 0.7)';
-      } else if (health < 60) {
-        healthBar.style.background = 'rgba(255, 255, 0, 0.7)';
-      } else {
-        healthBar.style.background = 'rgba(0, 0, 0, 0.5)';
+      // Update health bar width and color
+      const healthBar = document.getElementById('healthBar');
+      if (healthBar) {
+        const percentage = Math.max(0, Math.min(100, health));
+        healthBar.style.width = `${percentage}%`;
+        
+        // Change color based on health
+        if (health < 30) {
+          healthBar.className = 'hud-bar-fill';
+          healthBar.style.background = 'linear-gradient(90deg, #ff2222, #ff4444)';
+        } else if (health < 60) {
+          healthBar.className = 'hud-bar-fill';
+          healthBar.style.background = 'linear-gradient(90deg, #ffaa22, #ffcc44)';
+        } else {
+          healthBar.className = 'hud-bar-fill health-bar';
+        }
       }
     }
   }
@@ -66,12 +74,19 @@ export class UIManager {
     if (this.staminaElement) {
       this.staminaElement.textContent = Math.round(stamina);
       
-      // Change color based on stamina
-      const staminaBar = this.staminaElement.parentElement.parentElement;
-      if (stamina < 20) {
-        staminaBar.style.background = 'rgba(255, 165, 0, 0.7)';
-      } else {
-        staminaBar.style.background = 'rgba(0, 0, 0, 0.5)';
+      // Update stamina bar width and color
+      const staminaBar = document.getElementById('staminaBar');
+      if (staminaBar) {
+        const percentage = Math.max(0, Math.min(100, stamina));
+        staminaBar.style.width = `${percentage}%`;
+        
+        // Change color based on stamina
+        if (stamina < 20) {
+          staminaBar.className = 'hud-bar-fill';
+          staminaBar.style.background = 'linear-gradient(90deg, #ff6600, #ff8800)';
+        } else {
+          staminaBar.className = 'hud-bar-fill stamina-bar';
+        }
       }
     }
   }

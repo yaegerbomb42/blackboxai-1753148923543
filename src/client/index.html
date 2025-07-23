@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Warriors - 3D Spider Game</title>
+    <title>Web Warriors - 3D Spider Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,10 +13,10 @@
         }
         
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #2c1810 0%, #1a0f0a 50%, #0d0704 100%);
             overflow: hidden;
-            color: white;
+            color: #f5f5f5;
         }
         
         #gameContainer {
@@ -23,14 +24,78 @@
             width: 100vw;
             height: 100vh;
         }
-        
+
+        /* Enhanced Main Menu - Home Theme */
+        #mainMenu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #2c1810 0%, #1a0f0a 50%, #0d0704 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            color: #f5f5f5;
+        }
+
+        #mainMenu h1 {
+            font-family: 'Creepster', cursive;
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+            color: #d4af37;
+        }
+
+        #mainMenu .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            opacity: 0.8;
+            text-align: center;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .menu-buttons button {
+            background: linear-gradient(45deg, #8b4513, #a0522d);
+            color: #f5f5f5;
+            border: 2px solid #d4af37;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .menu-buttons button:hover {
+            background: linear-gradient(45deg, #a0522d, #cd853f);
+            border-color: #ffd700;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu-buttons button:active {
+            transform: translateY(0);
+        }
+
+        /* Enhanced Loading Screen */
         #loadingScreen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: linear-gradient(135deg, #2c1810 0%, #1a0f0a 50%, #0d0704 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -38,101 +103,257 @@
             z-index: 1000;
         }
         
+        #loadingScreen h1 {
+            font-family: 'Creepster', cursive;
+            font-size: 3rem;
+            color: #d4af37;
+            margin-bottom: 2rem;
+        }
+        
         #loadingText {
-            font-size: 24px;
-            margin-bottom: 20px;
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
         }
         
         #loadingBar {
-            width: 300px;
-            height: 10px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
+            width: 400px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
             overflow: hidden;
+            border: 1px solid #d4af37;
         }
         
         #loadingProgress {
             width: 0%;
             height: 100%;
-            background: linear-gradient(90deg, #00ff88, #00ccff);
+            background: linear-gradient(90deg, #d4af37, #ffd700);
             transition: width 0.3s ease;
         }
         
+        /* Enhanced HUD */
         #hud {
             position: absolute;
             top: 20px;
             left: 20px;
             z-index: 100;
             pointer-events: none;
+            font-family: 'Roboto', sans-serif;
         }
+
+        .hud-element {
+            background: rgba(20, 10, 5, 0.8);
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            backdrop-filter: blur(5px);
+            min-width: 200px;
+        }
+
+        .hud-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #d4af37;
+            margin-bottom: 4px;
+        }
+
+        .hud-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .hud-bar-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .health-bar { background: linear-gradient(90deg, #ff4444, #ff6666); }
+        .stamina-bar { background: linear-gradient(90deg, #44ff44, #66ff66); }
         
+        /* Enhanced Minimap */
         #minimap {
             position: absolute;
             top: 20px;
             right: 20px;
-            width: 200px;
-            height: 200px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid #fff;
-            border-radius: 10px;
+            width: 220px;
+            height: 220px;
+            background: rgba(20, 10, 5, 0.8);
+            border: 2px solid #d4af37;
+            border-radius: 12px;
             z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        #minimap canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
         }
         
+        /* Enhanced Crosshair */
         #crosshair {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.8);
+            width: 24px;
+            height: 24px;
+            border: 2px solid #d4af37;
             border-radius: 50%;
             z-index: 50;
             pointer-events: none;
+            opacity: 0.8;
+        }
+
+        #crosshair::before,
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            background: #d4af37;
+        }
+
+        #crosshair::before {
+            width: 2px;
+            height: 8px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #crosshair::after {
+            width: 8px;
+            height: 2px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Controls Info */
+        #controlsInfo {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(20, 10, 5, 0.8);
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 0.9rem;
+            z-index: 100;
+            pointer-events: none;
+            backdrop-filter: blur(5px);
+        }
+
+        #controlsInfo .control-item {
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            min-width: 200px;
+        }
+
+        #controlsInfo .key {
+            color: #d4af37;
+            font-weight: bold;
         }
         
         .hidden {
             display: none !important;
         }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
     </style>
 </head>
 <body>
     <div id="gameContainer">
-        <!-- Loading Screen -->
-        <div id="loadingScreen">
-            <h1>Web Warriors</h1>
-            <div id="loadingText">Loading...</div>
+        <!-- Enhanced Main Menu -->
+        <div id="mainMenu">
+            <h1>🕷️ Web Warriors</h1>
+            <div class="subtitle">Welcome to Your Spider Home<br>Climb, Hunt, and Survive</div>
+            <div class="menu-buttons">
+                <button id="startGameBtn">🏠 Enter Home</button>
+                <button id="settingsBtn">⚙️ Settings</button>
+                <button id="controlsBtn">🎮 Controls</button>
+                <button id="leaderboardBtn">🏆 Leaderboard</button>
+            </div>
+        </div>
+        
+        <!-- Enhanced Loading Screen -->
+        <div id="loadingScreen" class="hidden">
+            <h1>🕷️ Web Warriors</h1>
+            <div id="loadingText">Preparing your home...</div>
             <div id="loadingBar">
                 <div id="loadingProgress"></div>
             </div>
         </div>
         
-        <!-- Game HUD -->
+        <!-- Enhanced Game HUD -->
         <div id="hud" class="hidden">
-            <div id="healthBar" style="margin-bottom: 10px;">
-                <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
-                    Health: <span id="healthValue">100</span>/100
+            <div class="hud-element">
+                <div class="hud-label">Health</div>
+                <div class="hud-bar">
+                    <div class="hud-bar-fill health-bar" id="healthBar" style="width: 100%;"></div>
+                </div>
+                <div style="font-size: 0.8rem; margin-top: 4px;">
+                    <span id="healthValue">100</span>/100
                 </div>
             </div>
-            <div id="staminaBar" style="margin-bottom: 10px;">
-                <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
-                    Stamina: <span id="staminaValue">100</span>/100
+            <div class="hud-element">
+                <div class="hud-label">Stamina</div>
+                <div class="hud-bar">
+                    <div class="hud-bar-fill stamina-bar" id="staminaBar" style="width: 100%;"></div>
+                </div>
+                <div style="font-size: 0.8rem; margin-top: 4px;">
+                    <span id="staminaValue">100</span>/100
                 </div>
             </div>
-            <div id="scoreDisplay">
-                <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
-                    Flies Caught: <span id="scoreValue">0</span>
+            <div class="hud-element">
+                <div class="hud-label">🪰 Insects Caught</div>
+                <div style="font-size: 1.2rem; font-weight: bold; color: #ffd700;">
+                    <span id="scoreValue">0</span>
                 </div>
             </div>
         </div>
         
-        <!-- Minimap -->
+        <!-- Enhanced Minimap -->
         <div id="minimap" class="hidden">
-            <canvas id="minimapCanvas" width="196" height="196"></canvas>
+            <canvas id="minimapCanvas" width="216" height="216"></canvas>
         </div>
         
-        <!-- Crosshair -->
+        <!-- Enhanced Crosshair -->
         <div id="crosshair" class="hidden"></div>
+
+        <!-- Controls Info -->
+        <div id="controlsInfo" class="hidden">
+            <div class="control-item">
+                <span>Move:</span>
+                <span class="key">WASD</span>
+            </div>
+            <div class="control-item">
+                <span>Jump:</span>
+                <span class="key">SPACE</span>
+            </div>
+            <div class="control-item">
+                <span>Shoot Web:</span>
+                <span class="key">CLICK</span>
+            </div>
+            <div class="control-item">
+                <span>Look:</span>
+                <span class="key">MOUSE</span>
+            </div>
+        </div>
     </div>
     
     <script type="module" src="./main.js"></script>
