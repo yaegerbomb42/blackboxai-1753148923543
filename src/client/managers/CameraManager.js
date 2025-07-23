@@ -35,8 +35,8 @@ export class CameraManager {
 
     // Update camera rotation based on mouse input
     if (inputState) {
-      this.yaw -= inputState.mouseX;
-      this.pitch -= inputState.mouseY;
+      this.yaw -= inputState.mouseX * 0.8; // Slightly reduced sensitivity for closer view
+      this.pitch -= inputState.mouseY * 0.8;
       
       // Clamp pitch
       this.pitch = Math.max(this.minPitch, Math.min(this.maxPitch, this.pitch));
@@ -56,13 +56,14 @@ export class CameraManager {
     rightVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.yaw);
     rotatedOffset.applyAxisAngle(rightVector, this.pitch);
     
-    // Smooth camera movement
+    // Smooth camera movement with configurable smoothing
     const desiredPosition = targetPosition.clone().add(rotatedOffset);
-    this.camera.position.lerp(desiredPosition, deltaTime * 5);
+    const smoothingFactor = GAME_CONFIG.graphics.cameraSmoothing || 8;
+    this.camera.position.lerp(desiredPosition, deltaTime * smoothingFactor);
     
     // Look at target with slight offset
     const lookAtTarget = targetPosition.clone();
-    lookAtTarget.y += 1; // Look slightly above the spider
+    lookAtTarget.y += 0.5; // Reduced offset for closer view
     this.camera.lookAt(lookAtTarget);
     
     // Handle camera collisions with walls

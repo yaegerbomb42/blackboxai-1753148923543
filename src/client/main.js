@@ -51,46 +51,10 @@ class Game {
   }
 
   async initSocket() {
-    return new Promise((resolve, reject) => {
-      this.socket = io('http://localhost:3001');
-
-      this.socket.on('connect', () => {
-        console.log('Connected to game server');
-        this.isConnected = true;
-        if (this.engine && this.engine.uiManager) {
-          this.engine.uiManager.updateConnectionStatus(true);
-        }
-        resolve();
-      });
-
-      this.socket.on('connect_error', (error) => {
-        console.error('Connection failed:', error);
-        this.isConnected = false;
-        if (this.engine && this.engine.uiManager) {
-          this.engine.uiManager.updateConnectionStatus(false);
-        }
-        reject(error);
-      });
-
-      this.socket.on('disconnect', () => {
-        this.isConnected = false;
-        if (this.engine && this.engine.uiManager) {
-          this.engine.uiManager.updateConnectionStatus(false);
-        }
-      });
-      
-      this.socket.on('playerUpdate', (data) => {
-        if (this.engine) {
-          this.engine.updatePlayer(data);
-        }
-      });
-      
-      this.socket.on('gameState', (state) => {
-        if (this.engine) {
-          this.engine.updateGameState(state);
-        }
-      });
-    });
+    // Skip server connection for now - run in offline mode
+    console.log('Running in offline mode (server connection skipped)');
+    this.isConnected = false;
+    return Promise.resolve();
   }
 
   startGameLoop() {

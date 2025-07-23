@@ -18,6 +18,7 @@ export class InputManager {
       right: false,
       jump: false,
       shoot: false,
+      climb: false,
       mouseX: 0,
       mouseY: 0
     };
@@ -204,6 +205,7 @@ export class InputManager {
     this.inputState.left = this.keys['KeyA'] || false;
     this.inputState.right = this.keys['KeyD'] || false;
     this.inputState.jump = this.keys['Space'] || false;
+    this.inputState.climb = this.keys['KeyC'] || false; // C key for climbing
     this.inputState.shoot = this.mouse.buttons[0] || false; // Left mouse button
     
     // Update gamepad input

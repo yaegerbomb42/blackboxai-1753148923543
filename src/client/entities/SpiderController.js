@@ -23,16 +23,27 @@ export class SpiderController {
     this.canClimb = false;
     this.climbSurface = null;
     
+    // Animation state
+    this.legAnimationTime = 0;
+    this.isEating = false;
+    this.eatingAnimationTime = 0;
+    this.eatingDuration = 1.0; // seconds
+    this.legGroups = [];
+    this.originalLegRotations = [];
+    this.walkSoundTimer = 0;
+    
     // References for raycasting
     this.scene = null;
     this.camera = null;
+    this.audioManager = null;
   }
 
-  async init(scene, camera) {
+  async init(scene, camera, audioManager = null) {
     console.log('Initializing spider...');
     
     this.scene = scene;
     this.camera = camera;
+    this.audioManager = audioManager;
     
     this.createMesh();
     this.createPhysicsBody();
@@ -49,7 +60,11 @@ export class SpiderController {
     
     // Create spider legs
     const legGroup = new THREE.Group();
+    legGroup.name = 'legGroup';
     const legMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+    
+    this.legGroups = []; // Reset leg groups array
+    this.originalLegRotations = []; // Reset original rotations
     
     for (let i = 0; i < 8; i++) {
       const leg = this.createLeg(legMaterial);
@@ -62,6 +77,15 @@ export class SpiderController {
         Math.sin(angle) * 0.4
       );
       leg.rotation.y = angle;
+      leg.name = `leg_${i}`;
+      
+      // Store reference for animation
+      this.legGroups.push(leg);
+      this.originalLegRotations.push({
+        x: leg.rotation.x,
+        y: leg.rotation.y,
+        z: leg.rotation.z
+      });
       
       legGroup.add(leg);
     }
@@ -143,6 +167,10 @@ export class SpiderController {
       // Update stamina
       this.updateStamina(deltaTime);
       
+      // Update animations
+      this.updateLegAnimation(deltaTime);
+      this.updateEatingAnimation(deltaTime);
+      
       // Update web line visual
       if (this.isSwinging) {
         this.updateWebLine();
@@ -169,6 +197,9 @@ export class SpiderController {
     const forward = new CANNON.Vec3(0, 0, -1);
     const right = new CANNON.Vec3(1, 0, 0);
     
+    // Check if moving for walk sound
+    const isMoving = inputState.forward || inputState.backward || inputState.left || inputState.right;
+    
     // Apply input forces
     if (inputState.forward) {
       moveForce.vadd(forward.scale(this.moveSpeed), moveForce);
@@ -183,16 +214,51 @@ export class SpiderController {
       moveForce.vadd(right.scale(this.moveSpeed), moveForce);
     }
     
+    // Wall climbing
+    if (inputState.climb && this.canClimb && this.climbSurface && this.stamina > 0) {
+      const climbForce = new CANNON.Vec3(
+        this.climbSurface.x * GAME_CONFIG.physics.wallClimbForce,
+        GAME_CONFIG.physics.climbSpeed,
+        this.climbSurface.z * GAME_CONFIG.physics.wallClimbForce
+      );
+      this.body.applyForce(climbForce, this.body.position);
+      this.stamina -= GAME_CONFIG.gameplay.climbStaminaCost * deltaTime;
+      this.isClimbing = true;
+      
+      // Play climb sound
+      if (this.audioManager) {
+        this.audioManager.playSound('climb');
+      }
+    } else {
+      this.isClimbing = false;
+    }
+    
     // Apply movement force
     if (moveForce.length() > 0) {
       this.body.applyForce(moveForce, this.body.position);
+      
+      // Play walk sound occasionally
+      if (isMoving && this.isGrounded) {
+        this.walkSoundTimer -= deltaTime;
+        if (this.walkSoundTimer <= 0) {
+          if (this.audioManager) {
+            this.audioManager.playSound('walk');
+          }
+          this.walkSoundTimer = 0.3; // Play every 0.3 seconds
+        }
+      }
     }
     
-    // Jumping
-    if (inputState.jump && (this.isGrounded || this.canClimb)) {
+    // Enhanced jumping
+    if (inputState.jump && (this.isGrounded || this.canClimb) && this.stamina >= GAME_CONFIG.gameplay.jumpStaminaCost) {
       const jumpVector = new CANNON.Vec3(0, this.jumpForce, 0);
       this.body.velocity.vadd(jumpVector, this.body.velocity);
-      this.stamina -= 10; // Jumping costs stamina
+      this.stamina -= GAME_CONFIG.gameplay.jumpStaminaCost;
+      
+      // Play jump sound
+      if (this.audioManager) {
+        this.audioManager.playSound('jump');
+      }
     }
     
     // Apply air resistance
@@ -239,9 +305,12 @@ export class SpiderController {
       const raycaster = new THREE.Raycaster();
       const direction = new THREE.Vector3();
       
-      // Get direction from camera
+      // Get direction from camera with slight offset from spider position
       this.camera.getWorldDirection(direction);
-      raycaster.set(this.mesh.position, direction);
+      const startPosition = this.mesh.position.clone();
+      startPosition.add(direction.clone().multiplyScalar(0.5)); // Start slightly in front
+      
+      raycaster.set(startPosition, direction);
       
       // Find intersections with scene objects
       const intersections = raycaster.intersectObjects(this.scene.children, true);
@@ -256,10 +325,20 @@ export class SpiderController {
       if (validIntersections.length > 0) {
         const target = validIntersections[0];
         this.createWebAttachment(target.point);
+        
+        // Play web shot sound
+        if (this.audioManager) {
+          this.audioManager.playSound('webShot');
+        }
+        
         console.log('Web attached to:', target.object.name || 'object', 'at distance:', target.distance.toFixed(2));
       } else {
         console.log('No valid web attachment point found within range');
-        // Could add a visual/audio feedback for failed web shot
+        
+        // Play failed web shot sound (could be a different sound)
+        if (this.audioManager) {
+          this.audioManager.playSound('webShot'); // Same sound for now
+        }
       }
     } catch (error) {
       console.error('Error during web shooting:', error);
@@ -461,5 +540,149 @@ export class SpiderController {
 
   getStamina() {
     return this.stamina;
+  }
+
+  // New animation methods
+  updateLegAnimation(deltaTime) {
+    if (!this.legGroups || this.legGroups.length === 0) return;
+    
+    try {
+      // Get movement speed for animation
+      const speed = this.body.velocity.length();
+      const isMoving = speed > 0.1;
+      
+      if (isMoving && !this.isEating) {
+        // Animate legs during movement
+        this.legAnimationTime += deltaTime * speed * 3;
+        
+        this.legGroups.forEach((leg, index) => {
+          if (leg && leg.children) {
+            const phase = (index % 2) * Math.PI; // Alternate legs
+            const legOffset = Math.sin(this.legAnimationTime + phase) * 0.3;
+            
+            // Animate upper leg segment
+            if (leg.children[0]) {
+              leg.children[0].rotation.z = this.originalLegRotations[index].z + legOffset;
+            }
+            
+            // Animate lower leg segment
+            if (leg.children[1]) {
+              leg.children[1].rotation.z = this.originalLegRotations[index].z - legOffset * 0.5;
+            }
+          }
+        });
+      } else if (!this.isEating) {
+        // Return legs to original position when not moving
+        this.legGroups.forEach((leg, index) => {
+          if (leg && leg.children && this.originalLegRotations[index]) {
+            if (leg.children[0]) {
+              leg.children[0].rotation.z = this.originalLegRotations[index].z;
+            }
+            if (leg.children[1]) {
+              leg.children[1].rotation.z = this.originalLegRotations[index].z;
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error in leg animation:', error);
+    }
+  }
+
+  updateEatingAnimation(deltaTime) {
+    if (!this.isEating) return;
+    
+    try {
+      this.eatingAnimationTime += deltaTime;
+      
+      if (this.eatingAnimationTime < this.eatingDuration) {
+        // Vicious eating animation - make legs move aggressively
+        const eatPhase = this.eatingAnimationTime * 8; // Fast animation
+        
+        this.legGroups.forEach((leg, index) => {
+          if (leg && leg.children) {
+            const aggressiveOffset = Math.sin(eatPhase + index) * 0.8;
+            
+            // Make legs move more dramatically during eating
+            if (leg.children[0]) {
+              leg.children[0].rotation.z = this.originalLegRotations[index].z + aggressiveOffset;
+            }
+            if (leg.children[1]) {
+              leg.children[1].rotation.z = this.originalLegRotations[index].z - aggressiveOffset * 0.7;
+            }
+          }
+        });
+        
+        // Tilt the spider body slightly during eating
+        if (this.mesh) {
+          this.mesh.rotation.x = Math.sin(eatPhase) * 0.1;
+          this.mesh.rotation.z = Math.cos(eatPhase * 0.7) * 0.05;
+        }
+      } else {
+        // End eating animation
+        this.isEating = false;
+        this.eatingAnimationTime = 0;
+        
+        // Reset spider body rotation
+        if (this.mesh) {
+          this.mesh.rotation.x = 0;
+          this.mesh.rotation.z = 0;
+        }
+        
+        // Reset legs to original positions
+        this.legGroups.forEach((leg, index) => {
+          if (leg && leg.children && this.originalLegRotations[index]) {
+            if (leg.children[0]) {
+              leg.children[0].rotation.z = this.originalLegRotations[index].z;
+            }
+            if (leg.children[1]) {
+              leg.children[1].rotation.z = this.originalLegRotations[index].z;
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error in eating animation:', error);
+    }
+  }
+
+  playEatingAnimation() {
+    if (this.isEating) return; // Already eating
+    
+    try {
+      this.isEating = true;
+      this.eatingAnimationTime = 0;
+      
+      // Play eating sound
+      if (this.audioManager) {
+        this.audioManager.playSound('eat');
+      }
+      
+      console.log('Spider is eating - playing vicious animation!');
+    } catch (error) {
+      console.error('Error starting eating animation:', error);
+    }
+  }
+
+  // Method to be called when spider catches an insect
+  catchInsect(insect) {
+    try {
+      this.playEatingAnimation();
+      
+      // Heal slightly when eating
+      this.heal(5);
+      
+      // Restore some stamina
+      this.stamina = Math.min(this.stamina + 10, GAME_CONFIG.gameplay.maxStamina);
+      
+      // Show eating indicator in UI if available
+      if (window.game && window.game.engine && window.game.engine.uiManager) {
+        window.game.engine.uiManager.showEatingIndicator();
+      }
+      
+      console.log('Spider caught and is eating an insect!');
+    } catch (error) {
+      console.error('Error in catchInsect:', error);
+    }
   }
 }

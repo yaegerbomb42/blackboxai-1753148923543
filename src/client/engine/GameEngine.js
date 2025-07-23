@@ -9,6 +9,7 @@ import { SpiderController } from '../entities/SpiderController.js';
 import { FlyManager } from '../managers/FlyManager.js';
 import { WebManager } from '../managers/WebManager.js';
 import { UIManager } from '../managers/UIManager.js';
+import { AudioManager } from '../managers/AudioManager.js';
 
 export class GameEngine {
   constructor() {
@@ -23,6 +24,7 @@ export class GameEngine {
     this.flyManager = new FlyManager();
     this.webManager = new WebManager();
     this.uiManager = new UIManager();
+    this.audioManager = new AudioManager();
     
     // Entities
     this.spider = null;
@@ -47,10 +49,11 @@ export class GameEngine {
       this.physicsManager.init();
       this.inputManager.init();
       this.cameraManager.init(this.renderer);
+      await this.audioManager.init();
       
       // Create spider player
       this.spider = new SpiderController();
-      await this.spider.init(this.sceneManager.scene, this.cameraManager.camera);
+      await this.spider.init(this.sceneManager.scene, this.cameraManager.camera, this.audioManager);
       this.sceneManager.add(this.spider.mesh);
       this.physicsManager.addBody(this.spider.body);
       
@@ -62,7 +65,10 @@ export class GameEngine {
       // Initialize other managers
       this.flyManager.init(this.sceneManager, this.physicsManager);
       this.webManager.init(this.sceneManager, this.physicsManager);
-      this.uiManager.init();
+      this.uiManager.init(this.audioManager);
+      
+      // Start ambient sounds
+      this.audioManager.playAmbient();
       
       // Setup camera to follow spider
       this.cameraManager.setTarget(this.spider.mesh);
@@ -154,23 +160,38 @@ export class GameEngine {
     
     this.flyManager.flies.forEach((fly, index) => {
       const distance = spiderPosition.distanceTo(fly.mesh.position);
-      if (distance < 0.5) { // Collision threshold
-        this.catchFly(index);
+      const collisionThreshold = fly.isGroundBased ? 0.7 : 0.5; // Larger threshold for ground insects
+      
+      if (distance < collisionThreshold) {
+        this.catchFly(index, true); // Direct catch by spider
       }
     });
     
     // Check web-fly collisions
     this.webManager.checkFlyCollisions(this.flyManager.flies, (flyIndex) => {
-      this.catchFly(flyIndex);
+      this.catchFly(flyIndex, false); // Caught by web
     });
   }
 
-  catchFly(flyIndex) {
+  catchFly(flyIndex, directCatch = false) {
     const fly = this.flyManager.flies[flyIndex];
     if (fly) {
       this.gameState.score += fly.points;
+      
+      // Trigger eating animation if spider caught it directly
+      if (directCatch && this.spider) {
+        this.spider.catchInsect(fly);
+      }
+      
+      // Extra points for ground insects (they're harder to catch)
+      if (fly.isGroundBased) {
+        this.gameState.score += 5;
+      }
+      
       this.flyManager.removeFly(flyIndex);
       this.flyManager.spawnFly(); // Spawn a new one
+      
+      console.log(`Caught ${fly.type} insect! Score: ${this.gameState.score}`);
     }
   }
 

@@ -30,7 +30,7 @@ export class FlyManager {
     // Random fly type if not specified
     if (!type) {
       const types = Object.keys(FLY_CONFIGS);
-      const weights = [60, 25, 12, 3]; // Common, Fast, Rare, Golden
+      const weights = [50, 20, 10, 3, 17]; // Common, Fast, Rare, Golden, Ground
       type = this.weightedRandomSelect(types, weights);
     }
 
@@ -42,33 +42,52 @@ export class FlyManager {
 
   createFly(type) {
     const config = FLY_CONFIGS[type];
+    const isGroundBased = config.isGroundBased || false;
     
-    // Create fly mesh
-    const geometry = new THREE.SphereGeometry(config.size, 8, 6);
+    // Create fly mesh - different shape for ground insects
+    let geometry;
+    if (isGroundBased) {
+      // More oval/elongated shape for ground insects
+      geometry = new THREE.SphereGeometry(config.size, 8, 6);
+      geometry.scale(1.2, 0.8, 1.0); // Make it more oval
+    } else {
+      geometry = new THREE.SphereGeometry(config.size, 8, 6);
+    }
+    
     const material = new THREE.MeshLambertMaterial({ 
       color: config.color,
       emissive: config.color,
-      emissiveIntensity: 0.2
+      emissiveIntensity: isGroundBased ? 0.1 : 0.2 // Less glow for ground insects
     });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
     
-    // Add wings
-    const wingGroup = this.createWings(config);
-    mesh.add(wingGroup);
+    // Add wings (smaller for ground insects)
+    if (!isGroundBased) {
+      const wingGroup = this.createWings(config);
+      mesh.add(wingGroup);
+    } else {
+      // Ground insects have smaller, less visible wings
+      const wingGroup = this.createWings({...config, size: config.size * 0.5});
+      wingGroup.scale.set(0.5, 0.5, 0.5);
+      mesh.add(wingGroup);
+    }
     
     // Random position in room
-    const position = this.getRandomFlyPosition();
+    const position = this.getRandomFlyPosition(isGroundBased);
     mesh.position.copy(position);
     
     // Create physics body
     const shape = new CANNON.Sphere(config.size);
-    const body = new CANNON.Body({ mass: 0.01 }); // Very light
+    const body = new CANNON.Body({ mass: isGroundBased ? 0.02 : 0.01 }); // Ground insects slightly heavier
     body.addShape(shape);
     body.position.set(position.x, position.y, position.z);
     
-    // Random initial velocity
-    const velocity = MathUtils.randomVector3(config.speed);
+    // Random initial velocity (ground insects move slower)
+    const velocity = MathUtils.randomVector3(config.speed * (isGroundBased ? 0.3 : 1.0));
+    if (isGroundBased) {
+      velocity.y = Math.abs(velocity.y) * 0.1; // Minimal vertical movement for ground insects
+    }
     body.velocity.set(velocity.x, velocity.y, velocity.z);
     
     return {
@@ -79,7 +98,8 @@ export class FlyManager {
       speed: config.speed,
       direction: new THREE.Vector3().randomDirection(),
       changeDirectionTimer: 0,
-      wingAnimation: 0
+      wingAnimation: 0,
+      isGroundBased: isGroundBased
     };
   }
 
@@ -108,13 +128,22 @@ export class FlyManager {
     return wingGroup;
   }
 
-  getRandomFlyPosition() {
-    // Spawn flies in air, avoiding ground and walls
-    return new THREE.Vector3(
-      MathUtils.randomInRange(-15, 15),
-      MathUtils.randomInRange(3, 8),
-      MathUtils.randomInRange(-15, 15)
-    );
+  getRandomFlyPosition(isGroundBased = false) {
+    if (isGroundBased) {
+      // Spawn ground insects near the floor
+      return new THREE.Vector3(
+        MathUtils.randomInRange(-15, 15),
+        MathUtils.randomInRange(0.2, 1.5), // Close to ground
+        MathUtils.randomInRange(-15, 15)
+      );
+    } else {
+      // Spawn flies in air, avoiding ground and walls
+      return new THREE.Vector3(
+        MathUtils.randomInRange(-15, 15),
+        MathUtils.randomInRange(3, 8),
+        MathUtils.randomInRange(-15, 15)
+      );
+    }
   }
 
   weightedRandomSelect(items, weights) {
@@ -140,10 +169,11 @@ export class FlyManager {
 
   updateFly(fly, deltaTime) {
     // Update wing animation
-    fly.wingAnimation += deltaTime * 20; // Fast wing beat
+    const wingSpeed = fly.isGroundBased ? 10 : 20; // Ground insects have slower wing beats
+    fly.wingAnimation += deltaTime * wingSpeed;
     const wingGroup = fly.mesh.children[0];
     if (wingGroup) {
-      const wingOffset = Math.sin(fly.wingAnimation) * 0.2;
+      const wingOffset = Math.sin(fly.wingAnimation) * (fly.isGroundBased ? 0.1 : 0.2);
       wingGroup.children.forEach((wing, index) => {
         wing.rotation.z = wingOffset * (index === 0 ? 1 : -1);
       });
@@ -152,39 +182,60 @@ export class FlyManager {
     // Update AI behavior
     fly.changeDirectionTimer -= deltaTime;
     if (fly.changeDirectionTimer <= 0) {
-      // Change direction randomly
-      fly.direction = new THREE.Vector3().randomDirection();
-      fly.changeDirectionTimer = MathUtils.randomInRange(1, 3);
+      if (fly.isGroundBased) {
+        // Ground insects change direction less frequently and stay mostly horizontal
+        fly.direction = new THREE.Vector3().randomDirection();
+        fly.direction.y = Math.abs(fly.direction.y) * 0.1; // Minimal vertical movement
+        fly.changeDirectionTimer = MathUtils.randomInRange(2, 5); // Longer intervals
+      } else {
+        // Flying insects change direction more frequently
+        fly.direction = new THREE.Vector3().randomDirection();
+        fly.changeDirectionTimer = MathUtils.randomInRange(1, 3);
+      }
     }
     
     // Apply movement
-    const force = fly.direction.clone().multiplyScalar(fly.speed * 0.1);
+    const moveMultiplier = fly.isGroundBased ? 0.05 : 0.1; // Ground insects move slower
+    const force = fly.direction.clone().multiplyScalar(fly.speed * moveMultiplier);
     fly.body.applyForce(
       new CANNON.Vec3(force.x, force.y, force.z),
       fly.body.position
     );
     
-    // Apply some air resistance
-    fly.body.velocity.scale(0.95, fly.body.velocity);
+    // Apply resistance
+    const resistance = fly.isGroundBased ? 0.9 : 0.95; // More resistance for ground insects
+    fly.body.velocity.scale(resistance, fly.body.velocity);
     
     // Sync mesh with physics
     fly.mesh.position.copy(fly.body.position);
     fly.mesh.quaternion.copy(fly.body.quaternion);
     
-    // Add some random bobbing motion
-    fly.mesh.position.y += Math.sin(fly.wingAnimation * 0.5) * 0.05;
+    // Add movement effects
+    if (fly.isGroundBased) {
+      // Ground insects crawl with subtle movement
+      fly.mesh.position.y += Math.sin(fly.wingAnimation * 0.3) * 0.02;
+      // Slight rotation to simulate crawling
+      fly.mesh.rotation.y += Math.sin(fly.wingAnimation * 0.2) * 0.05;
+    } else {
+      // Flying insects have bobbing motion
+      fly.mesh.position.y += Math.sin(fly.wingAnimation * 0.5) * 0.05;
+    }
   }
 
   keepFlyInBounds(fly) {
     const bounds = 18; // Room boundaries
     const position = fly.body.position;
     
+    // Different bounds for ground vs flying insects
+    const minY = fly.isGroundBased ? 0.1 : 1;
+    const maxY = fly.isGroundBased ? 2 : 10;
+    
     // Bounce off walls by reversing direction
     if (Math.abs(position.x) > bounds) {
       fly.direction.x *= -1;
       fly.body.velocity.x *= -0.5;
     }
-    if (position.y > 10 || position.y < 1) {
+    if (position.y > maxY || position.y < minY) {
       fly.direction.y *= -1;
       fly.body.velocity.y *= -0.5;
     }
@@ -195,7 +246,7 @@ export class FlyManager {
     
     // Clamp position
     position.x = MathUtils.clamp(position.x, -bounds, bounds);
-    position.y = MathUtils.clamp(position.y, 1, 10);
+    position.y = MathUtils.clamp(position.y, minY, maxY);
     position.z = MathUtils.clamp(position.z, -bounds, bounds);
   }
 

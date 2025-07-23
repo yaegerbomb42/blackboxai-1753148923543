@@ -10,8 +10,10 @@ export class UIManager {
     this.elements = {};
   }
 
-  init() {
+  init(audioManager = null) {
     console.log('Initializing UI manager...');
+    
+    this.audioManager = audioManager;
     
     // Get existing UI elements
     this.healthElement = document.getElementById('healthValue');
@@ -26,6 +28,7 @@ export class UIManager {
     
     // Create modern UI elements
     this.createModernUI();
+    this.createSoundToggle();
     
     console.log('UI manager initialized');
   }
@@ -461,5 +464,100 @@ export class UIManager {
     `;
     document.body.appendChild(indicator);
     return indicator;
+  }
+
+  createSoundToggle() {
+    if (!this.audioManager) return;
+
+    // Create sound toggle button
+    this.elements.soundToggle = this.createElement('button', 'sound-toggle', {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      width: '50px',
+      height: '50px',
+      background: 'rgba(0, 0, 0, 0.7)',
+      border: '2px solid rgba(255, 255, 255, 0.3)',
+      borderRadius: '8px',
+      color: '#ffffff',
+      fontSize: '20px',
+      cursor: 'pointer',
+      fontFamily: 'Arial, sans-serif',
+      transition: 'all 0.3s ease',
+      zIndex: '100',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }, '🔊');
+
+    // Add hover effects
+    this.elements.soundToggle.addEventListener('mouseenter', () => {
+      this.elements.soundToggle.style.background = 'rgba(255, 255, 255, 0.1)';
+      this.elements.soundToggle.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+    });
+
+    this.elements.soundToggle.addEventListener('mouseleave', () => {
+      this.elements.soundToggle.style.background = 'rgba(0, 0, 0, 0.7)';
+      this.elements.soundToggle.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+    });
+
+    // Add click handler
+    this.elements.soundToggle.addEventListener('click', () => {
+      const isMuted = this.audioManager.toggleMute();
+      this.elements.soundToggle.textContent = isMuted ? '🔇' : '🔊';
+      this.elements.soundToggle.title = isMuted ? 'Unmute Sound' : 'Mute Sound';
+      
+      // Show notification
+      this.showNotification(
+        isMuted ? 'Sound muted' : 'Sound unmuted',
+        'info',
+        1500
+      );
+    });
+
+    // Set initial state
+    this.elements.soundToggle.title = 'Mute Sound';
+    document.body.appendChild(this.elements.soundToggle);
+  }
+
+  // Method to show eating indicator
+  showEatingIndicator() {
+    // Remove existing indicator
+    const existing = document.getElementById('eating-indicator');
+    if (existing) existing.remove();
+
+    // Create eating indicator
+    const indicator = this.createElement('div', 'eating-indicator', {
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      fontSize: '48px',
+      color: '#ff4444',
+      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+      zIndex: '150',
+      pointerEvents: 'none',
+      animation: 'pulse 0.5s ease-in-out'
+    }, '🕷️💀');
+
+    // Add CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes pulse {
+        0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+        50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    document.body.appendChild(indicator);
+
+    // Remove after animation
+    setTimeout(() => {
+      if (indicator.parentNode) {
+        indicator.parentNode.removeChild(indicator);
+      }
+    }, 1000);
   }
 }

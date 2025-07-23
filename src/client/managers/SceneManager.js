@@ -53,11 +53,13 @@ export class SceneManager {
   }
 
   createEnvironment() {
-    // Create a simple room environment
+    // Create a detailed room environment with spider vibes
     this.createRoom();
     this.createFurniture();
     this.createFloor();
     this.createWalls();
+    this.createCobwebs();
+    this.createSpiderVibeElements();
   }
 
   createRoom() {
@@ -207,6 +209,162 @@ export class SceneManager {
     texture.repeat.set(4, 4);
     
     return texture;
+  }
+
+  createCobwebs() {
+    try {
+      // Create cobwebs in corners and between furniture
+      const cobwebPositions = [
+        { start: [-19, 11, -19], end: [-17, 9, -17] }, // Top corner
+        { start: [19, 11, 19], end: [17, 9, 17] },     // Opposite corner
+        { start: [-19, 11, 19], end: [-17, 9, 17] },   // Another corner
+        { start: [19, 11, -19], end: [17, 9, -17] },   // Fourth corner
+        { start: [0, 8, -19], end: [2, 6, -17] },      // Wall cobweb
+        { start: [-15, 6, 0], end: [-13, 4, 2] },      // Near bookshelf
+      ];
+
+      cobwebPositions.forEach((pos, index) => {
+        const cobweb = this.createSingleCobweb(pos.start, pos.end);
+        if (cobweb) {
+          this.scene.add(cobweb);
+        }
+      });
+    } catch (error) {
+      console.error('Error creating cobwebs:', error);
+    }
+  }
+
+  createSingleCobweb(startPos, endPos) {
+    try {
+      const points = [];
+      const start = new THREE.Vector3(...startPos);
+      const end = new THREE.Vector3(...endPos);
+      
+      // Create a web-like pattern with multiple strands
+      const segments = 8;
+      for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const point = start.clone().lerp(end, t);
+        
+        // Add some randomness to make it look more natural
+        point.x += (Math.random() - 0.5) * 0.5;
+        point.y += (Math.random() - 0.5) * 0.3;
+        point.z += (Math.random() - 0.5) * 0.5;
+        
+        points.push(point);
+      }
+      
+      // Create the main strand
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({ 
+        color: 0xcccccc,
+        transparent: true,
+        opacity: 0.4,
+        linewidth: 1
+      });
+      
+      const cobwebLine = new THREE.Line(geometry, material);
+      
+      // Add cross strands for web effect
+      const webGroup = new THREE.Group();
+      webGroup.add(cobwebLine);
+      
+      // Add a few cross strands
+      for (let i = 2; i < segments - 1; i += 2) {
+        const crossPoints = [
+          points[i].clone().add(new THREE.Vector3(-0.3, 0, 0)),
+          points[i].clone().add(new THREE.Vector3(0.3, 0, 0))
+        ];
+        
+        const crossGeometry = new THREE.BufferGeometry().setFromPoints(crossPoints);
+        const crossLine = new THREE.Line(crossGeometry, material);
+        webGroup.add(crossLine);
+      }
+      
+      return webGroup;
+    } catch (error) {
+      console.error('Error creating single cobweb:', error);
+      return null;
+    }
+  }
+
+  createSpiderVibeElements() {
+    try {
+      // Add dark, mysterious elements
+      this.createDarkCorners();
+      this.createOldCrates();
+      this.createDustyBooks();
+    } catch (error) {
+      console.error('Error creating spider vibe elements:', error);
+    }
+  }
+
+  createDarkCorners() {
+    // Add dark shadowy areas in corners
+    const cornerPositions = [
+      [-18, 1, -18],
+      [18, 1, 18],
+      [-18, 1, 18],
+      [18, 1, -18]
+    ];
+
+    cornerPositions.forEach(pos => {
+      // Create a dark patch on the floor
+      const shadowGeometry = new THREE.PlaneGeometry(3, 3);
+      const shadowMaterial = new THREE.MeshLambertMaterial({ 
+        color: 0x222222,
+        transparent: true,
+        opacity: 0.6
+      });
+      const shadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
+      shadow.rotation.x = -Math.PI / 2;
+      shadow.position.set(pos[0], 0.01, pos[2]);
+      this.scene.add(shadow);
+    });
+  }
+
+  createOldCrates() {
+    // Add some old wooden crates for atmosphere
+    const cratePositions = [
+      [12, 1, -15],
+      [-10, 1, 12],
+      [8, 1, 16]
+    ];
+
+    cratePositions.forEach(pos => {
+      const crateGeometry = new THREE.BoxGeometry(2, 2, 2);
+      const crateMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 });
+      const crate = new THREE.Mesh(crateGeometry, crateMaterial);
+      crate.position.set(pos[0], pos[1], pos[2]);
+      crate.castShadow = true;
+      crate.receiveShadow = true;
+      
+      // Rotate slightly for natural look
+      crate.rotation.y = Math.random() * 0.3;
+      
+      this.scene.add(crate);
+    });
+  }
+
+  createDustyBooks() {
+    // Add some scattered books near the bookshelf
+    for (let i = 0; i < 5; i++) {
+      const bookGeometry = new THREE.BoxGeometry(0.3, 0.05, 0.2);
+      const bookMaterial = new THREE.MeshLambertMaterial({ 
+        color: new THREE.Color().setHSL(Math.random() * 0.1, 0.3, 0.2) // Dark colors
+      });
+      const book = new THREE.Mesh(bookGeometry, bookMaterial);
+      
+      book.position.set(
+        -14 + Math.random() * 2,
+        0.1 + i * 0.06,
+        -2 + Math.random() * 4
+      );
+      book.rotation.y = Math.random() * Math.PI;
+      book.castShadow = true;
+      
+      this.scene.add(book);
+    }
   }
 
   add(object) {

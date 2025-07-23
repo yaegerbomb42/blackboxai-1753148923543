@@ -3,27 +3,32 @@ export const GAME_CONFIG = {
     gravity: -9.81,
     webStrength: 50,
     webStiffness: 0.8,
-    climbSpeed: 2,
-    jumpForce: 8,
+    climbSpeed: 3,
+    jumpForce: 12, // Increased for better responsiveness
     airResistance: 0.98,
-    groundFriction: 0.8
+    groundFriction: 0.8,
+    wallClimbForce: 8 // New: force applied when climbing walls
   },
   gameplay: {
     maxHealth: 100,
     maxStamina: 100,
-    webCooldown: 1000, // ms
-    webRange: 15, // maximum web shooting distance
+    webCooldown: 800, // ms - Reduced for better web shooting
+    webRange: 18, // maximum web shooting distance - Increased
     flyRespawnTime: 5000, // ms
     flyCount: 10,
-    staminaRegenRate: 20, // per second
-    webSwingStaminaCost: 2 // per second
+    groundInsectCount: 5, // New: number of ground insects
+    staminaRegenRate: 25, // per second - Increased
+    webSwingStaminaCost: 2, // per second
+    jumpStaminaCost: 15, // New: stamina cost for jumping
+    climbStaminaCost: 1 // New: stamina cost per second while climbing
   },
   graphics: {
     renderDistance: 100,
     shadowQuality: 'medium',
     particleCount: 50,
-    cameraDistance: 8,
-    cameraHeight: 4
+    cameraDistance: 5, // Reduced for closer third-person view
+    cameraHeight: 3, // Reduced for closer view
+    cameraSmoothing: 8 // New: camera follow smoothing factor
   },
   controls: {
     mouseSensitivity: 0.002,
@@ -34,6 +39,12 @@ export const GAME_CONFIG = {
     tickRate: 60,
     maxLatency: 200,
     interpolationBuffer: 100
+  },
+  // New: Audio configuration
+  audio: {
+    masterVolume: 0.7,
+    sfxVolume: 0.8,
+    ambientVolume: 0.5
   }
 };
 
@@ -61,5 +72,13 @@ export const FLY_CONFIGS = {
     points: 100,
     color: 0xffaa00,
     size: 0.15
+  },
+  // New: Ground insects (slower, crawling)
+  ground: {
+    speed: 0.5,
+    points: 20,
+    color: 0x8B4513, // Brown color for ground insects
+    size: 0.15,
+    isGroundBased: true
   }
 };
