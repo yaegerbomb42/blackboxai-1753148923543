@@ -192,14 +192,28 @@ export class SpiderController {
   updateMovement(deltaTime, inputState) {
     const velocity = this.body.velocity;
     const moveForce = new CANNON.Vec3();
-    
-    // Calculate movement direction based on camera
-    const forward = new CANNON.Vec3(0, 0, -1);
-    const right = new CANNON.Vec3(1, 0, 0);
-    
+
+    // Calculate movement direction based on camera orientation
+    if (!this.camera) {
+      console.warn('Camera not set in SpiderController');
+      return;
+    }
+
+    const forwardVector = new THREE.Vector3();
+    this.camera.getWorldDirection(forwardVector);
+    forwardVector.y = 0; // Ignore vertical component
+    forwardVector.normalize();
+
+    const rightVector = new THREE.Vector3();
+    rightVector.crossVectors(new THREE.Vector3(0, 1, 0), forwardVector).normalize();
+
+    // Convert to Cannon vectors
+    const forward = new CANNON.Vec3(forwardVector.x, forwardVector.y, forwardVector.z);
+    const right = new CANNON.Vec3(rightVector.x, rightVector.y, rightVector.z);
+
     // Check if moving for walk sound
     const isMoving = inputState.forward || inputState.backward || inputState.left || inputState.right;
-    
+
     // Apply input forces
     if (inputState.forward) {
       moveForce.vadd(forward.scale(this.moveSpeed), moveForce);
@@ -213,7 +227,7 @@ export class SpiderController {
     if (inputState.right) {
       moveForce.vadd(right.scale(this.moveSpeed), moveForce);
     }
-    
+
     // Wall climbing
     if (inputState.climb && this.canClimb && this.climbSurface && this.stamina > 0) {
       const climbForce = new CANNON.Vec3(
@@ -224,7 +238,7 @@ export class SpiderController {
       this.body.applyForce(climbForce, this.body.position);
       this.stamina -= GAME_CONFIG.gameplay.climbStaminaCost * deltaTime;
       this.isClimbing = true;
-      
+
       // Play climb sound
       if (this.audioManager) {
         this.audioManager.playSound('climb');
@@ -232,11 +246,11 @@ export class SpiderController {
     } else {
       this.isClimbing = false;
     }
-    
+
     // Apply movement force
     if (moveForce.length() > 0) {
       this.body.applyForce(moveForce, this.body.position);
-      
+
       // Play walk sound occasionally
       if (isMoving && this.isGrounded) {
         this.walkSoundTimer -= deltaTime;
@@ -248,19 +262,18 @@ export class SpiderController {
         }
       }
     }
-    
+
     // Enhanced jumping
     if (inputState.jump && (this.isGrounded || this.canClimb) && this.stamina >= GAME_CONFIG.gameplay.jumpStaminaCost) {
-      const jumpVector = new CANNON.Vec3(0, this.jumpForce, 0);
-      this.body.velocity.vadd(jumpVector, this.body.velocity);
+      this.body.velocity.y = this.jumpForce;
       this.stamina -= GAME_CONFIG.gameplay.jumpStaminaCost;
-      
+
       // Play jump sound
       if (this.audioManager) {
         this.audioManager.playSound('jump');
       }
     }
-    
+
     // Apply air resistance
     velocity.scale(GAME_CONFIG.physics.airResistance, velocity);
   }

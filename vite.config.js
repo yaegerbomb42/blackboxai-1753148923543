@@ -15,7 +15,7 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
-    allowedHosts: 'all'
+    allowedHosts: ['rltjc8-3002.csb.app']
   },
   resolve: {
     alias: {
