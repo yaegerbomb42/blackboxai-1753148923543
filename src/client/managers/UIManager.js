@@ -1,3 +1,5 @@
+import { TodoPage } from '../pages/TodoPage.js';
+
 export class UIManager {
   constructor() {
     this.healthElement = null;
@@ -31,6 +33,29 @@ export class UIManager {
     this.createSoundToggle();
     
     console.log('UI manager initialized');
+  }
+
+  showTodoPage() {
+    try {
+      // Hide all other UI elements
+      document.getElementById('mainMenu').classList.add('hidden');
+      
+      // Get the TODO container and render content
+      const todoContainer = document.getElementById('todoPage');
+      todoContainer.innerHTML = ''; // Clear previous content
+      
+      const todoPage = new TodoPage();
+      todoContainer.appendChild(todoPage.render());
+      todoContainer.classList.remove('hidden');
+    } catch (error) {
+      console.error("Error showing TODO page:", error);
+    }
+  }
+  
+  showMainMenu() {
+    // Hide the TODO page and show main menu again
+    document.getElementById('todoPage').classList.add('hidden');
+    document.getElementById('mainMenu').classList.remove('hidden');
   }
 
   initMinimap() {

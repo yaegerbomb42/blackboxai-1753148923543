@@ -40,6 +40,7 @@ class Game {
       settingsBtn: document.getElementById('settingsBtn'),
       controlsBtn: document.getElementById('controlsBtn'),
       leaderboardBtn: document.getElementById('leaderboardBtn'),
+      todoBtn: document.getElementById('todoBtn'),
       hud: document.getElementById('hud'),
       minimap: document.getElementById('minimap'),
       crosshair: document.getElementById('crosshair'),
@@ -51,6 +52,7 @@ class Game {
     this.menuElements.settingsBtn.addEventListener('click', () => this.showSettings());
     this.menuElements.controlsBtn.addEventListener('click', () => this.toggleControls());
     this.menuElements.leaderboardBtn.addEventListener('click', () => this.showLeaderboard());
+    this.menuElements.todoBtn.addEventListener('click', () => this.showTodoPage());
 
     console.log('Menu system initialized');
   }
